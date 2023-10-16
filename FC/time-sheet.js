@@ -58,13 +58,13 @@ frappe.ui.form.on("Employee Monthly Timesheet", {
 				timeSheetRow.day = result.names[i];
 				timeSheetRow.working_hours = "";
 				timeSheetRow.public_holidays = "";
-				timeSheetRow.annual_paid_leave = "";
+				timeSheetRow.annual_paid_leave ="";
 				timeSheetRow.sick_leave = "";
 				timeSheetRow.unpaid_leave = "";
 				timeSheetRow.holiday_leave = "";
 				timeSheetRow.compensation_leave = "";
 
-				if(result.names[i] == "Saturday" || result.names[i] == "Sunday"){
+				if (result.names[i] == "Saturday" || result.names[i] == "Sunday") {
 
 					timeSheetRow.working_hours = "0";
 					timeSheetRow.public_holidays = "0";
@@ -74,10 +74,29 @@ frappe.ui.form.on("Employee Monthly Timesheet", {
 					timeSheetRow.holiday_leave = "0";
 					timeSheetRow.compensation_leave = "0";
 
-					frm.fields_dict.time_sheets.grid.toggle_enable("working_hours", false);
 				}
-				
+
 			}
+			var timeSheetRow1 = frappe.model.add_child(frm.doc, "Time Sheet", "time_sheets");
+			var timeSheetRow2 = frappe.model.add_child(frm.doc, "Time Sheet", "time_sheets");
+
+			timeSheetRow1.day = "Total Working Hours";
+			timeSheetRow1.working_hours = "";
+			timeSheetRow1.public_holidays = "";
+			timeSheetRow1.annual_paid_leave = "";
+			timeSheetRow1.sick_leave = "";
+			timeSheetRow1.unpaid_leave = "";
+			timeSheetRow1.holiday_leave = "";
+			timeSheetRow1.compensation_leave = "";
+
+			timeSheetRow2.day = "Total Working Days";
+			timeSheetRow2.working_hours = "";
+			timeSheetRow2.public_holidays = "";
+			timeSheetRow2.annual_paid_leave = "";
+			timeSheetRow2.sick_leave = "";
+			timeSheetRow2.unpaid_leave = "";
+			timeSheetRow2.holiday_leave = "";
+			timeSheetRow2.compensation_leave = "";
 
 			frm.refresh_field("time_sheets");
 		}
@@ -160,3 +179,131 @@ function generateDates2023() {
 
 
 
+
+frappe.ui.form.on('Employee Monthly Timesheet', {
+	// Trigger the calculation on loading the form
+	onload: function(frm) {
+		calculateTotalHours(frm);
+	}
+});
+
+frappe.ui.form.on('Employee Monthly Timesheet', {
+	// Trigger the calculation whenever a value in the child table changes
+	working_hours: function(frm, cdt, cdn) {
+		console.log("asfhksj")
+		calculateTotalHours(frm);
+	},
+	public_holidays: function(frm, cdt, cdn) {
+		calculateTotalHours(frm);
+	},
+	annual_paid_leave: function(frm, cdt, cdn) {
+		calculateTotalHours(frm);
+	},
+	sick_leave: function(frm, cdt, cdn) {
+		calculateTotalHours(frm);
+	},
+	unpaid_leave: function(frm, cdt, cdn) {
+		calculateTotalHours(frm);
+	},
+	holiday_leave: function(frm, cdt, cdn) {
+		calculateTotalHours(frm);
+	},
+	compensation_leave: function(frm, cdt, cdn) {
+		calculateTotalHours(frm);
+	}
+});
+
+
+//calculate the total hous per column and set the
+function calculateTotalHours(frm, cdt, cdn) {
+	
+	console.log("F Test 1");
+	console.log("frm", frm);
+
+	//get the timesheets child table
+	var time_sheets = frm.doc.time_sheets;
+	console.log("time sheets", time_sheets);
+
+	var total_working_hours = 0;
+	var total_public_holidays = 0;
+	var total_annual_paid_leave = 0;
+	var total_sick_leave = 0;
+	var total_unpaid_leave = 0;
+	var total_holiday_leave = 0;
+	var total_compensation_leave = 0;
+
+	//set total number of rows
+	var total_rows = time_sheets.length;
+	console.log("total rows", total_rows);
+
+	//calculating total working hours
+	time_sheets.map((row, index) => {
+		
+		if (row.working_hours) total_working_hours += parseInt(row.working_hours);
+		if (row.public_holidays) total_public_holidays += parseInt(row.public_holidays);
+		if (row.annual_paid_leave) total_annual_paid_leave += parseInt(row.annual_paid_leave);
+		if (row.sick_leave) total_sick_leave += parseInt(row.sick_leave);
+		if (row.unpaid_leave) total_unpaid_leave += parseInt(row.unpaid_leave);
+		if (row.holiday_leave) total_holiday_leave += parseInt(row.holiday_leave);
+		if (row.compensation_leave) total_compensation_leave += parseInt(row.compensation_leave);
+
+		//setting the total working hours
+		if (index == total_rows - 2) {
+			row.working_hours = total_working_hours;
+			frappe.model.set_value(row.doctype, row.name, 'working_hours', total_working_hours);
+			frappe.model.set_value(row.doctype, row.name, 'public_holidays', total_public_holidays);
+			frappe.model.set_value(row.doctype, row.name, 'annual_paid_leave', total_annual_paid_leave);
+			frappe.model.set_value(row.doctype, row.name, 'sick_leave', total_sick_leave);
+			frappe.model.set_value(row.doctype, row.name, 'unpaid_leave', total_unpaid_leave);
+			frappe.model.set_value(row.doctype, row.name, 'holiday_leave', total_holiday_leave);
+			frappe.model.set_value(row.doctype, row.name, 'compensation_leave', total_compensation_leave);
+			frm.refresh_field("time_sheets");
+			
+			console.log("final working hours", row.working_hours);
+		}
+	});
+
+
+	//calculating total working days
+	var total_working_hours_day = 0;
+	var total_public_holidays_day = 0;
+	var total_annual_paid_leave_day = 0;
+	var total_sick_leave_day = 0;
+	var total_unpaid_leave_day = 0;
+	var total_holiday_leave_day = 0;
+	var total_compensation_leave_day = 0;
+	
+	time_sheets.map((row, index) => {
+		if (row.working_hours && row.working_hours != 0) total_working_hours_day += 1;
+		if (row.public_holidays && row.public_holidays != 0) total_public_holidays_day += 1;
+		if (row.annual_paid_leave && row.annual_paid_leave != 0) total_annual_paid_leave_day += 1;
+		if (row.sick_leave && row.sick_leave != 0) total_sick_leave_day += 1;
+		if (row.unpaid_leave && row.unpaid_leave != 0) total_unpaid_leave_day += 1;
+		if (row.holiday_leave && row.holiday_leave != 0) total_holiday_leave_day += 1;
+		if (row.compensation_leave && row.compensation_leave != 0) total_compensation_leave_day += 1;
+
+		//setting the total working days
+		if (index == total_rows - 1) {
+			row.working_hours = total_working_hours;
+			frappe.model.set_value(row.doctype, row.name, 'working_hours', total_working_hours_day);
+			frappe.model.set_value(row.doctype, row.name, 'public_holidays', total_public_holidays_day);
+			frappe.model.set_value(row.doctype, row.name, 'annual_paid_leave', total_annual_paid_leave_day);
+			frappe.model.set_value(row.doctype, row.name, 'sick_leave', total_sick_leave_day);
+			frappe.model.set_value(row.doctype, row.name, 'unpaid_leave', total_unpaid_leave_day);
+			frappe.model.set_value(row.doctype, row.name, 'holiday_leave', total_holiday_leave_day);
+			frappe.model.set_value(row.doctype, row.name, 'compensation_leave', total_compensation_leave_day);
+			frm.refresh_field("time_sheets");
+			
+			console.log("final working hours", row.working_hours);
+		}
+	});
+
+}
+
+
+
+							// tableRow.item = allDatas[i].item1.;
+							// tableRow.uom = allDatas[i].uom;
+							// tableRow.quantity = allDatas[i].qty;
+							// tableRow.unit_rate = allDatas[i].unit_price;
+							// tableRow.total_cost = allDatas[i].total_cost;

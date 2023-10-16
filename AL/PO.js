@@ -1,17 +1,27 @@
-cur_frm.add_fetch('mr_no', 'approved_by', 'mr_approved_by');
-cur_frm.add_fetch('mr_no', 'checked_by', 'mr_checked_by');
-cur_frm.add_fetch('mr_no', 'prepared_by', 'mr_prepared_by');
+//get the material request approvals
+cur_frm.add_fetch('pr_no', 'mr_approved_by', 'mr_approved_by');
+cur_frm.add_fetch('pr_no', 'mr_checked_by', 'mr_checked_by');
+cur_frm.add_fetch('pr_no', 'mr_prepared_by', 'mr_prepared_by');
 
+//get the material request item
+cur_frm.add_fetch('pr_no', 'mr_no', 'mr_item');
+
+//get the purchase requistion approvals
+cur_frm.add_fetch('pr_no', 'pr_approved_by', 'pr_approved_by');
+cur_frm.add_fetch('pr_no', 'pr_checked_by', 'pr_checked_by');
+cur_frm.add_fetch('pr_no', 'pr_prepared_by', 'pr_prepared_by');
+
+cur_frm.add_fetch('pr_no', 'workflow_state', 'pr_state');
 
 frappe.ui.form.on('Purchase Order', {
 
-	mr_no: function(frm) {
-		if (frm.doc.mr_no) {
+	pr_no: function(frm) {
+		if (frm.doc.pr_no) {
 			frm.clear_table('items');
 			console.log("Test 1");
-			frappe.model.with_doc('Material Request', frm.doc.mr_no, function() {
-
-				let source_doc = frappe.model.get_doc('Material Request', frm.doc.mr_no);
+			frappe.model.with_doc('Purchase Requisition', frm.doc.pr_no, function() {
+				console.log("Test 2")
+				let source_doc = frappe.model.get_doc('Purchase Requisition', frm.doc.pr_no);
 				console.log("source doc", source_doc)
 
 				$.each(source_doc.items, function(index, source_row) {
@@ -33,40 +43,54 @@ frappe.ui.form.on('Purchase Order', {
 				});
 
 				frm.refresh_field('items');
+				console.log("\npr prepared by", frm.doc.pr_prepared_by);
+				console.log("pr approved by", frm.doc.pr_approved_by);
+				console.log("mr item", frm.doc.mr_item);
 			});
 		}
 	},
 });
 
-
 frappe.ui.form.on('Purchase Order', {
 	onload: function(frm) {
-		console.log("Test ");
 
-		if (frm.doc.workflow_state == 'draft') {
-			if (!frm.doc.po_prepared_by) {
-				frm.set_value('po_prepared_by', frappe.user.full_name());
-				console.log("po prepared by", frm.doc.po_prepared_by);
-			}
+		if (frm.doc.__islocal) {
+			frm.set_df_property('po_prepared_by', 'reqd', true);  // Make field mandatory
+			console.log("test1");
 		}
-		else if (frm.doc.workflow_state == 'Checked') {
-			if (!frm.doc.po_checked_by) {
-				frm.set_value('po_checked_by', frappe.user.full_name());
-				console.log("po checked by", frm.doc.po_checked_by);
-			}
+		else if (frm.doc.workflow_state === 'draft') {
+			frm.set_df_property('po_checked_by', 'reqd', true);   // Make field mandatory
+			console.log("test2");
+			frm.refresh_field("po_checked_by");
 		}
-		else if (frm.doc.workflow_state == 'Verified') {
-			if (!frm.doc.po_verified_by) {
-				frm.set_value('po_verified_by', frappe.user.full_name());
-				console.log("po verified by", frm.doc.po_verified_by);
-			}
+
+		else if (frm.doc.workflow_state === 'Checked') {
+			frm.set_df_property('po_verified_by', 'reqd', true);  // Make field mandatory
+			console.log("test3");
+			frm.refresh_field("po_verified_by");
+
 		}
-		else if (frm.doc.workflow_state == 'Approved') {
-			if (!frm.doc.po_approved_by) {
-				frm.set_value('po_approved_by', frappe.user.full_name());
-				console.log("po approved by", frm.doc.po_approved_by);
-			}
+
+		else if (frm.doc.workflow_state === 'Verified') {
+			frm.set_df_property('po_approved_by', 'reqd', true);  // Make field mandatory
+			console.log("test3");
+			frm.refresh_field("po_approved_by");
+
 		}
+
 	}
 });
+
+
+frappe.ui.form.on('Purchase Order', {
+	before_save: function(frm){
+		console.log("Test 1111");
+		if(frm.doc.pr_state !== "Approved"){
+			console.log("Test 2222");
+			frappe.msgprint(__("You can not use unapproved purchase requisition."));
+           	frappe.validated = false; 
+		}
+	}
+})
+
 

@@ -1,0 +1,102 @@
+frappe.ui.form.on('Material Request', {
+	onload: function(frm) {
+		frm.set_value('requested_by', frappe.user.full_name());
+
+		if (frm.doc.workflow_state == 'draft') {
+			if (!frm.doc.prepared_by) {
+				frm.set_value('prepared_by', frappe.user.full_name());
+				console.log("prepared by", frm.doc.prepared_by)
+			}
+		}
+		else if (frm.doc.workflow_state == 'Checked') {
+			if (!frm.doc.checked_by) {
+				frm.set_value('checked_by', frappe.user.full_name());
+				console.log("checked by", frm.doc.checked_by)
+			}
+
+		}
+		else if (frm.doc.workflow_state == 'Approved') {
+			if (!frm.doc.approved_by) {
+				frm.set_value('approved_by', frappe.user.full_name());
+				console.log("approved by", frm.doc.approved_by)
+			}
+
+		}
+	}
+});
+
+
+frappe.ui.form.on('Material Request Item', {
+	for_which_task: function(frm, cdt, cdn) {
+		console.log("Test 1");
+		var child_doc = locals[cdt][cdn];
+		console.log("child doc", child_doc)
+
+		// Fetch the value of 'for_which_task' from the Material Request Item
+		var forWhichTask = child_doc.for_which_task;
+		console.log("form which task", forWhichTask)
+
+
+		// Fetch the corresponding Task document
+		frappe.model.with_doc("Task", forWhichTask, function() {
+			console.log("Test 2");
+
+			var taskDoc = frappe.model.get_doc("Task", forWhichTask);
+			console.log("Task doc", taskDoc);
+			console.log("item code", taskDoc.item_code);
+
+
+
+			 // Fetch the value of 'quantity1' from the item_detail_planning child table of the Task doctype
+            var plannedQuantity = 0;
+
+			console.log("planned quantity", plannedQuantity);
+
+            // Loop through the item_detail_planning table in Material Request and set 'quantity1' field in each row
+           taskDoc.item_detail_planning.forEach(function(row) {
+				console.log("Test 3")
+                if (row.item === child_doc.item_code) {
+					console.log("Task 4")
+					console.log("quantity", row.quantity1);
+					// frappe.model.set_value(row.doctype, row.name, "task_planned_item_quantity", row.quantity1);
+					child_doc.task_planned_item_quantity = row.quantity1;
+					console.log(child_doc.task_planned_item_quantity)
+                }
+            });
+			//prevent saving if the quantity is greater than the planned quantity
+			console.log("requested quantity", child_doc.qty);
+			console.log("Planned quantity", child_doc.task_planned_item_quantity)
+			
+			if(child_doc.qty > child_doc.task_planned_item_quantity){
+				console.log("Test 5")
+				
+				frappe.msgprint(__("You can not request a quantity more than the planned quantity."));
+           		frappe.validated = false; 
+			
+			}
+
+		});
+	}
+});
+
+
+frappe.ui.form.on('Material Request', {
+    before_save: function(frm, cdt, cdn) {
+			console.log("Test 11");
+			var child_doc = locals[cdt][cdn];
+			console.log("child doc 11", child_doc)
+
+			
+        // Check your condition here; for example, if the field 'my_field' is empty, prevent saving
+			if(child_doc.qty > child_doc.task_planned_item_quantity){
+				console.log("Test 5")
+				
+				frappe.msgprint(__("You can not request a quantity more than the planned quantity."));
+           		frappe.validated = false; 
+			
+			}
+    }
+});
+
+
+
