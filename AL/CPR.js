@@ -47,6 +47,8 @@ frappe.ui.form.on('Cheque Payment Request', {
 				console.log("cpr approved by", frm.doc.cpr_approved_by);
 			}
 		}
+
+		
 	}
 });
 
