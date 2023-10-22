@@ -14,12 +14,18 @@ frappe.ui.form.on("Monthly Plan", {
                 frappe.model.set_value(d.doctype, d.name, 'equipment_hour', (d.quantity / d.productivity));	
      }
  });
- //Old Script Section End
 
- 
+frappe.ui.form.on("Monthly Plan", {
+	 operational_plan: function(frm, cdt, cdn) {
+		if(!frm.doc.month){
+			frm.doc.operational_plan = null;
+			frm.refresh_field("operational_plan")
+			frappe.show_alert("Please Select Month First")
+		}
+	 }
+ });
 
-//Script by Bereket Begin
-//Script to get the total execution plan to date
+
 
 function addDays(date, days) {
     var result = new Date(date);

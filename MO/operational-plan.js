@@ -21,51 +21,180 @@ cur_frm.add_fetch('id_mac', 'mc_number', 'uf');
 
 //trigger on row deletion
 frappe.ui.form.on('Operational Plan Detail', {
-	before_items_remove: function(frm) {
-		console.log("eyesera new ende")
+	task_list_before_remove: function(frm, cdt, cdn) {
+		console.log("frm", frm)
+		console.log("cdt", cdt)
+		console.log("cdn", cdn)
+
+		console.log('row remove is here sami. Awo eyesera new ende');
+		var row = locals[cdt][cdn];
+		console.log("removed row", row)
+	}
+})
+
+frappe.ui.form.on('Operational Plan Detail One1', {
+	m_1: function(frm, cdt, cdn){
+		prohobitUpperSum1(frm, cdt, cdn, "m_1")
+	},
+	m_2: function(frm, cdt, cdn){
+		prohobitUpperSum1(frm, cdt, cdn, "m_2")
+	},
+	m_3: function(frm, cdt, cdn){
+		prohobitUpperSum1(frm, cdt, cdn, "m_3")
+	},
+	m_4: function(frm, cdt, cdn){
+		prohobitUpperSum1(frm, cdt, cdn, "m_4")
+	},
+	m_5: function(frm, cdt, cdn){
+		prohobitUpperSum1(frm, cdt, cdn, "m_5")
+	},
+	m_6: function(frm, cdt, cdn){
+		prohobitUpperSum1(frm, cdt, cdn, "m_6")
+	},
+})
+
+frappe.ui.form.on('Operational Plan Detail Two2', {
+	m_7: function(frm, cdt, cdn){
+		prohobitUpperSum2(frm, cdt, cdn, "m_7")
+	},
+	m_8: function(frm, cdt, cdn){
+		prohobitUpperSum2(frm, cdt, cdn, "m_8")
+	},
+	m_9: function(frm, cdt, cdn){
+		prohobitUpperSum2(frm, cdt, cdn, "m_9")
+	},
+	m_10: function(frm, cdt, cdn){
+		prohobitUpperSum2(frm, cdt, cdn, "m_10")
+	},
+	m_11: function(frm, cdt, cdn){
+		prohobitUpperSum2(frm, cdt, cdn, "m_11")
+	},
+	m_12: function(frm, cdt, cdn){
+		prohobitUpperSum2(frm, cdt, cdn, "m_12")
+	},
+})
+
+function prohobitUpperSum1(frm, cdt, cdn, month) {
+	var total = 0;
+	var row = locals[cdt][cdn];
+	console.log("localssss for each month", row);
+
+	// Calculate the total
+	total += row.m_1 ? parseFloat(row.m_1) : 0;
+	total += row.m_2 ? parseFloat(row.m_2) : 0;
+	total += row.m_3 ? parseFloat(row.m_3) : 0;
+	total += row.m_4 ? parseFloat(row.m_4) : 0;
+	total += row.m_5 ? parseFloat(row.m_5) : 0;
+	total += row.m_6 ? parseFloat(row.m_6) : 0;
+
+	console.log("total sum", total);
+
+	if(total > row.planned){
+		row[month] = null;
+		frm.refresh_field("operational_plan_detail_one1")
+		frappe.show_alert("Each month sum should be lower than the planned")
+	}
+}
+
+function prohobitUpperSum2(frm, cdt, cdn, month) {
+	var total = 0;
+	var row = locals[cdt][cdn];
+	console.log("localssss for each month", row);
+
+	// Calculate the total
+	total += row.m_7 ? parseFloat(row.m_7) : 0;
+	total += row.m_8 ? parseFloat(row.m_8) : 0;
+	total += row.m_9 ? parseFloat(row.m_9) : 0;
+	total += row.m_10 ? parseFloat(row.m_10) : 0;
+	total += row.m_11 ? parseFloat(row.m_11) : 0;
+	total += row.m_12 ? parseFloat(row.m_12) : 0;
+
+	console.log("total sum", total);
+
+	if(total > row.planned){
+		row[month] = null;
+		frm.refresh_field("operational_plan_detail_two2")
+		frappe.show_alert("Each month sum should be lower than the planned")
+	}
+}
+
+frappe.ui.form.on('Operational Plan Detail', {
+	before_task_list_remove: function(frm, cdt, cdn) {
+		var row = locals[cdt][cdn];
+		var removed_activity = row.activity;
+		console.log("removed task id", removed_activity);
+
+		var operational_plan_detail_one1 = frm.doc.operational_plan_detail_one1;
+		var operational_plan_detail_two2 = frm.doc.operational_plan_detail_two2
+
+		deleteRow(frm, removed_activity, "operational_plan_detail_one1");
+		deleteRow(frm, removed_activity, "operational_plan_detail_two2");
+
+		deleteRow(frm, removed_activity, "machinery");
+		deleteRow(frm, removed_activity, "manpower1");
+		deleteRow(frm, removed_activity, "material1");
+
+
+
 	}
 });
+
+function deleteRow(frm, removed_activity, childTable) {
+	var table = frm.doc[childTable];
+	for (var i = 0; i < table.length; i++) {
+		if (table[i].activity === removed_activity) {
+			// Remove the row from the child table
+			console.log("removed")
+			table.splice(i, 1);
+			// Update the form
+			frm.refresh_field(childTable);
+		}
+	}
+}
+
+
 
 
 
 //auto assign the start and end date table for the monthly plan use
 frappe.ui.form.on("Operational Plan", {
 	end_date: function(frm, cdt, cdn) {
-		if(frm.doc.start_date && frm.doc.end_date){
-		var start_date = frm.doc.start_date;
-	    var end_date = frm.doc.end_date;
-	
-	    // Loop through months
-	    for (var i = 0; i < 12; i++) {
-	        var row = frm.add_child("operational_plan_months_date_data")
-			row.month_no = i+1;
-	        if (i == 0) {
-	            console.log("first try")
-	            row.start_date = start_date;
-	       		row.end_date = frappe.datetime.add_days(row.start_date, 29);
-				
-	        } else {
-	            console.log("not first try")
-	            row.start_date = frappe.datetime.add_days(frm.doc.operational_plan_months_date_data[i-1].end_date, 1); 
-	       		row.end_date = frappe.datetime.add_days(row.start_date, 29);
-				
-	        }
-	
+		if (frm.doc.start_date && frm.doc.end_date) {
+			frm.operational_plan_months_date_data = [];
+			var start_date = frm.doc.start_date;
+			var end_date = frm.doc.end_date;
 
-			console.log("start date for month " + i + " is " + row.start_date);
-			console.log("end date for month " + i + " is " + row.end_date);
-	
-	        // Check if end date is in the past
-	        if (row.end_date > end_date) {
-	            console.log("now exited")
-	            row.end_date = end_date;
-	            break;
-	        }
-	
-	    }
-		console.log("operational_plan_months_date_data", frm.doc.operational_plan_months_date_data)
-	
-	    frm.refresh_field("operational_plan_months_date_data"); // Move this line out of the loop
+			// Loop through months
+			for (var i = 0; i < 12; i++) {
+				var row = frm.add_child("operational_plan_months_date_data")
+				row.month_no = i + 1;
+				if (i == 0) {
+					console.log("first try")
+					row.start_date = start_date;
+					row.end_date = frappe.datetime.add_days(row.start_date, 29);
+
+				} else {
+					console.log("not first try")
+					row.start_date = frappe.datetime.add_days(frm.doc.operational_plan_months_date_data[i - 1].end_date, 1);
+					row.end_date = frappe.datetime.add_days(row.start_date, 29);
+
+				}
+
+
+				console.log("start date for month " + i + " is " + row.start_date);
+				console.log("end date for month " + i + " is " + row.end_date);
+
+				// Check if end date is in the past
+				if (row.end_date > end_date) {
+					console.log("now exited")
+					row.end_date = end_date;
+					break;
+				}
+
+			}
+			console.log("operational_plan_months_date_data", frm.doc.operational_plan_months_date_data)
+
+			frm.refresh_field("operational_plan_months_date_data"); // Move this line out of the loop
 		}
 	}
 
@@ -86,7 +215,7 @@ frappe.ui.form.on('Operational Plan Detail', {
 	planned: function(frm, cdt, cdn) {
 		var row = locals[cdt][cdn];
 		console.log("rowwws", row)
-		if(row.planned > row.remaining_planned_qty){
+		if (row.planned > row.remaining_planned_qty) {
 			row.planned = null;
 			frappe.show_alert("The palnned quantity shluld be less than the remaining!")
 		}
@@ -100,1704 +229,356 @@ frappe.ui.form.on('Operational Plan Detail', {
 //calculate the machinery plan fro the detail one
 frappe.ui.form.on('Operational Plan Detail One1', {
 	m_1: function(frm, cdt, cdn) {
-
-		// Create an object to store aggregated values for machinery type
-		var machineryAggregatedValues = {};
-
-		// Iterate through the machinery array
-		for (var i = 0; i < frm.doc.machinery.length; i++) {
-			var machineryItem = frm.doc.machinery[i];
-			var type = machineryItem.type;
-			var activityMonthQuantity = 0;
-
-			for (var j = 0; j < frm.doc.operational_plan_detail_one1.length; j++) {
-				var monthData = frm.doc.operational_plan_detail_one1[j];
-				if (monthData.activity == machineryItem.activity) { // Compare activity
-					activityMonthQuantity = monthData.m_1 || 0;
-					console.log("activity month quantity", activityMonthQuantity)
-					console.log("month total data", monthData)
-					
-					
-					break;
-				}
-			}
-			
-
-			if (machineryAggregatedValues[type]) {
-				// If type already exists in machineryAggregatedValues, add the value
-				machineryAggregatedValues[type] += activityMonthQuantity * machineryItem.uf * machineryItem.efficency * machineryItem.item_no / machineryItem.productivity;
-			} else {
-				// If type doesn't exist, assign the value
-				machineryAggregatedValues[type] = activityMonthQuantity * machineryItem.uf * machineryItem.efficency * machineryItem.item_no / machineryItem.productivity;
-			}
-		}
-		console.log("AGGRICAGE", machineryAggregatedValues)
-
-		// Iterate through the machinary_detail_summarized_by_month_section_a array
-		for (var i = 0; i < frm.doc.machinary_detail_summarized_by_month_section_a.length; i++) {
-			var currentItem = frm.doc.machinary_detail_summarized_by_month_section_a[i];
-			var type = currentItem.type;
-			var aggregatedValueForType = machineryAggregatedValues[type];
-
-			if (aggregatedValueForType) {
-				currentItem.op_e_m1 = aggregatedValueForType;
-			} else {
-				currentItem.op_e_m1 = 0; // or handle the case where there is no aggregated value for the type
-			}
-		}
-
-		frm.refresh_field("machinary_detail_summarized_by_month_section_a");
-
-
-		// Function to calculate manpower values
-		function calculateManpowerValues() {
-			var manpowerAggregatedValues = {};
-
-			// Iterate through the manpower array
-			for (var i = 0; i < frm.doc.manpower1.length; i++) {
-				var manpowerItem = frm.doc.manpower1[i];
-				console.log("manp ower item", manpowerItem)
-				var job_title = manpowerItem.job_title;
-				var activityMonthQuantity = 0;
-
-				for (var j = 0; j < frm.doc.operational_plan_detail_one1.length; j++) {
-					var monthData = frm.doc.operational_plan_detail_one1[j];
-					if (monthData.activity == manpowerItem.activity) {
-						activityMonthQuantity = monthData.m_1 || 0;
-						break;
-					}
-				}
-				console.log("monthe qunttity", activityMonthQuantity)
-
-				if (manpowerAggregatedValues[job_title]) {
-					manpowerAggregatedValues[job_title] += activityMonthQuantity * (manpowerItem.uf * manpowerItem.li_permanent * manpowerItem.mp_number) / manpowerItem.productivity;
-				} else {
-					manpowerAggregatedValues[job_title] = activityMonthQuantity * (manpowerItem.uf * manpowerItem.li_permanent * manpowerItem.mp_number) / manpowerItem.productivity;
-				}
-			}
-			console.log("manpoere aggrirgate", manpowerAggregatedValues);
-
-			for (var i = 0; i < frm.doc.manpower_detail_summarized_by_month_section_a.length; i++) {
-				var currentItem = frm.doc.manpower_detail_summarized_by_month_section_a[i];
-				var job_title = currentItem.job_title;
-				var aggregatedValueForType = manpowerAggregatedValues[job_title];
-
-				if (aggregatedValueForType) {
-					currentItem.op_mp_m1 = aggregatedValueForType;
-				} else {
-					currentItem.op_mp_m1 = 0;
-				}
-			}
-
-			frm.refresh_field("manpower_detail_summarized_by_month_section_a");
-		}
-
-		// Call the manpower function
-		calculateManpowerValues();
-
-		function calculateMaterialValues() {
-			var materialAggregatedValues = {};
-
-			// Iterate through the material1 array
-			for (var i = 0; i < frm.doc.material1.length; i++) {
-				var materialItem = frm.doc.material1[i];
-				console.log("material item", materialItem);
-				var itemName = materialItem.item1;
-				var activityMonthQuantity = 0;
-
-				for (var j = 0; j < frm.doc.operational_plan_detail_one1.length; j++) {
-					var monthData = frm.doc.operational_plan_detail_one1[j];
-					if (monthData.activity == materialItem.activity) {
-						activityMonthQuantity = monthData.m_1 || 0;
-						break;
-					}
-				}
-				console.log("month quantity", activityMonthQuantity);
-
-				if (materialAggregatedValues[itemName]) {
-					materialAggregatedValues[itemName] += activityMonthQuantity * materialItem.qty;
-				} else {
-					materialAggregatedValues[itemName] = activityMonthQuantity * materialItem.qty;
-				}
-			}
-			console.log("material aggregate", materialAggregatedValues);
-
-			for (var i = 0; i < frm.doc.material_detail_summarized_by_month_section_a.length; i++) {
-				var currentItem = frm.doc.material_detail_summarized_by_month_section_a[i];
-				console.log("cureiejireb", currentItem)
-				var itemName = currentItem.item;
-				var aggregatedValueForType = materialAggregatedValues[itemName];
-
-				if (aggregatedValueForType) {
-					currentItem.op_m_m1 = aggregatedValueForType;
-				} else {
-					currentItem.op_m_m1 = 0;
-				}
-			}
-
-			frm.refresh_field("material_detail_summarized_by_month_section_a");
-		}
-
-		// Call the material function
-		calculateMaterialValues();
-
-
+		calculateMachineryValues(frm, cdt, cdn, "1");
+		calculateMaterialValues(frm, cdt, cdn, "1");
+		calculateManpowerValues(frm, cdt, cdn, "1");
 	},
-
 	m_2: function(frm, cdt, cdn) {
-		console.log("row")
-
-		// Create an object to store aggregated values for machinery type
-		var machineryAggregatedValues = {};
-
-		// Iterate through the machinery array
-		for (var i = 0; i < frm.doc.machinery.length; i++) {
-			var machineryItem = frm.doc.machinery[i];
-			var type = machineryItem.type;
-			var activityMonthQuantity = 0;
-
-			for (var j = 0; j < frm.doc.operational_plan_detail_one1.length; j++) {
-				var monthData = frm.doc.operational_plan_detail_one1[j];
-				if (monthData.activity == machineryItem.activity) { // Compare activity
-					activityMonthQuantity = monthData.m_2 || 0;
-					console.log("activity month quantity", activityMonthQuantity)
-					break;
-				}
-			}
-
-			if (machineryAggregatedValues[type]) {
-				// If type already exists in machineryAggregatedValues, add the value
-				machineryAggregatedValues[type] += activityMonthQuantity * machineryItem.uf * machineryItem.efficency * machineryItem.item_no / machineryItem.productivity;
-			} else {
-				// If type doesn't exist, assign the value
-				machineryAggregatedValues[type] = activityMonthQuantity * machineryItem.uf * machineryItem.efficency * machineryItem.item_no / machineryItem.productivity;
-			}
-		}
-		console.log("AGGRICAGE", machineryAggregatedValues)
-
-		// Iterate through the machinary_detail_summarized_by_month_section_a array
-		for (var i = 0; i < frm.doc.machinary_detail_summarized_by_month_section_a.length; i++) {
-			var currentItem = frm.doc.machinary_detail_summarized_by_month_section_a[i];
-			var type = currentItem.type;
-			var aggregatedValueForType = machineryAggregatedValues[type];
-
-			if (aggregatedValueForType) {
-				currentItem.op_e_m2 = aggregatedValueForType;
-			} else {
-				currentItem.op_e_m2 = 0; // or handle the case where there is no aggregated value for the type
-			}
-		}
-
-		frm.refresh_field("machinary_detail_summarized_by_month_section_a");
-
-
-		// Function to calculate manpower values
-		function calculateManpowerValues() {
-			var manpowerAggregatedValues = {};
-
-			// Iterate through the manpower array
-			for (var i = 0; i < frm.doc.manpower1.length; i++) {
-				var manpowerItem = frm.doc.manpower1[i];
-				console.log("manp ower item", manpowerItem)
-				var job_title = manpowerItem.job_title;
-				var activityMonthQuantity = 0;
-
-				for (var j = 0; j < frm.doc.operational_plan_detail_one1.length; j++) {
-					var monthData = frm.doc.operational_plan_detail_one1[j];
-					if (monthData.activity == manpowerItem.activity) {
-						activityMonthQuantity = monthData.m_2 || 0;
-						break;
-					}
-				}
-				console.log("monthe qunttity", activityMonthQuantity)
-
-				if (manpowerAggregatedValues[job_title]) {
-					manpowerAggregatedValues[job_title] += activityMonthQuantity * (manpowerItem.uf * manpowerItem.li_permanent * manpowerItem.mp_number) / manpowerItem.productivity;
-				} else {
-					manpowerAggregatedValues[job_title] = activityMonthQuantity * (manpowerItem.uf * manpowerItem.li_permanent * manpowerItem.mp_number) / manpowerItem.productivity;
-				}
-			}
-			console.log("manpoere aggrirgate", manpowerAggregatedValues);
-
-			for (var i = 0; i < frm.doc.manpower_detail_summarized_by_month_section_a.length; i++) {
-				var currentItem = frm.doc.manpower_detail_summarized_by_month_section_a[i];
-				var job_title = currentItem.job_title;
-				var aggregatedValueForType = manpowerAggregatedValues[job_title];
-
-				if (aggregatedValueForType) {
-					currentItem.op_mp_m2 = aggregatedValueForType;
-				} else {
-					currentItem.op_mp_m2 = 0;
-				}
-			}
-
-			frm.refresh_field("manpower_detail_summarized_by_month_section_a");
-		}
-
-		// Call the manpower function
-		calculateManpowerValues();
-
-		function calculateMaterialValues() {
-			var materialAggregatedValues = {};
-
-			// Iterate through the material1 array
-			for (var i = 0; i < frm.doc.material1.length; i++) {
-				var materialItem = frm.doc.material1[i];
-				console.log("material item", materialItem);
-				var itemName = materialItem.item1;
-				var activityMonthQuantity = 0;
-
-				for (var j = 0; j < frm.doc.operational_plan_detail_one1.length; j++) {
-					var monthData = frm.doc.operational_plan_detail_one1[j];
-					if (monthData.activity == materialItem.activity) {
-						activityMonthQuantity = monthData.m_2 || 0;
-						break;
-					}
-				}
-				console.log("month quantity", activityMonthQuantity);
-
-				if (materialAggregatedValues[itemName]) {
-					materialAggregatedValues[itemName] += activityMonthQuantity * materialItem.qty;
-				} else {
-					materialAggregatedValues[itemName] = activityMonthQuantity * materialItem.qty;
-				}
-			}
-			console.log("material aggregate", materialAggregatedValues);
-
-			for (var i = 0; i < frm.doc.material_detail_summarized_by_month_section_a.length; i++) {
-				var currentItem = frm.doc.material_detail_summarized_by_month_section_a[i];
-				console.log("cureiejireb", currentItem)
-				var itemName = currentItem.item;
-				var aggregatedValueForType = materialAggregatedValues[itemName];
-
-				if (aggregatedValueForType) {
-					currentItem.op_m_m2 = aggregatedValueForType;
-				} else {
-					currentItem.op_m_m2 = 0;
-				}
-			}
-
-			frm.refresh_field("material_detail_summarized_by_month_section_a");
-		}
-
-		// Call the material function
-		calculateMaterialValues();
-
-
+		calculateMachineryValues(frm, cdt, cdn, "2");
+		calculateMaterialValues(frm, cdt, cdn, "2");
+		calculateManpowerValues(frm, cdt, cdn, "2");
 	},
 	m_3: function(frm, cdt, cdn) {
-		console.log("row")
-
-		// Create an object to store aggregated values for machinery type
-		var machineryAggregatedValues = {};
-
-		// Iterate through the machinery array
-		for (var i = 0; i < frm.doc.machinery.length; i++) {
-			var machineryItem = frm.doc.machinery[i];
-			var type = machineryItem.type;
-			var activityMonthQuantity = 0;
-
-			for (var j = 0; j < frm.doc.operational_plan_detail_one1.length; j++) {
-				var monthData = frm.doc.operational_plan_detail_one1[j];
-				if (monthData.activity == machineryItem.activity) { // Compare activity
-					activityMonthQuantity = monthData.m_3 || 0;
-					console.log("activity month quantity", activityMonthQuantity)
-					break;
-				}
-			}
-
-			if (machineryAggregatedValues[type]) {
-				// If type already exists in machineryAggregatedValues, add the value
-				machineryAggregatedValues[type] += activityMonthQuantity * machineryItem.uf * machineryItem.efficency * machineryItem.item_no / machineryItem.productivity;
-			} else {
-				// If type doesn't exist, assign the value
-				machineryAggregatedValues[type] = activityMonthQuantity * machineryItem.uf * machineryItem.efficency * machineryItem.item_no / machineryItem.productivity;
-			}
-		}
-		console.log("AGGRICAGE", machineryAggregatedValues)
-
-		// Iterate through the machinary_detail_summarized_by_month_section_a array
-		for (var i = 0; i < frm.doc.machinary_detail_summarized_by_month_section_a.length; i++) {
-			var currentItem = frm.doc.machinary_detail_summarized_by_month_section_a[i];
-			var type = currentItem.type;
-			var aggregatedValueForType = machineryAggregatedValues[type];
-
-			if (aggregatedValueForType) {
-				currentItem.op_e_m3 = aggregatedValueForType;
-			} else {
-				currentItem.op_e_m3 = 0; // or handle the case where there is no aggregated value for the type
-			}
-		}
-
-		frm.refresh_field("machinary_detail_summarized_by_month_section_a");
-
-
-		// Function to calculate manpower values
-		function calculateManpowerValues() {
-			var manpowerAggregatedValues = {};
-
-			// Iterate through the manpower array
-			for (var i = 0; i < frm.doc.manpower1.length; i++) {
-				var manpowerItem = frm.doc.manpower1[i];
-				console.log("manp ower item", manpowerItem)
-				var job_title = manpowerItem.job_title;
-				var activityMonthQuantity = 0;
-
-				for (var j = 0; j < frm.doc.operational_plan_detail_one1.length; j++) {
-					var monthData = frm.doc.operational_plan_detail_one1[j];
-					if (monthData.activity == manpowerItem.activity) {
-						activityMonthQuantity = monthData.m_3 || 0;
-						break;
-					}
-				}
-				console.log("monthe qunttity", activityMonthQuantity)
-
-				if (manpowerAggregatedValues[job_title]) {
-					manpowerAggregatedValues[job_title] += activityMonthQuantity * (manpowerItem.uf * manpowerItem.li_permanent * manpowerItem.mp_number) / manpowerItem.productivity;
-				} else {
-					manpowerAggregatedValues[job_title] = activityMonthQuantity * (manpowerItem.uf * manpowerItem.li_permanent * manpowerItem.mp_number) / manpowerItem.productivity;
-				}
-			}
-			console.log("manpoere aggrirgate", manpowerAggregatedValues);
-
-			for (var i = 0; i < frm.doc.manpower_detail_summarized_by_month_section_a.length; i++) {
-				var currentItem = frm.doc.manpower_detail_summarized_by_month_section_a[i];
-				var job_title = currentItem.job_title;
-				var aggregatedValueForType = manpowerAggregatedValues[job_title];
-
-				if (aggregatedValueForType) {
-					currentItem.op_mp_m3 = aggregatedValueForType;
-				} else {
-					currentItem.op_mp_m3 = 0;
-				}
-			}
-
-			frm.refresh_field("manpower_detail_summarized_by_month_section_a");
-		}
-
-		// Call the manpower function
-		calculateManpowerValues();
-
-		function calculateMaterialValues() {
-			var materialAggregatedValues = {};
-
-			// Iterate through the material1 array
-			for (var i = 0; i < frm.doc.material1.length; i++) {
-				var materialItem = frm.doc.material1[i];
-				console.log("material item", materialItem);
-				var itemName = materialItem.item1;
-				var activityMonthQuantity = 0;
-
-				for (var j = 0; j < frm.doc.operational_plan_detail_one1.length; j++) {
-					var monthData = frm.doc.operational_plan_detail_one1[j];
-					if (monthData.activity == materialItem.activity) {
-						activityMonthQuantity = monthData.m_3 || 0;
-						break;
-					}
-				}
-				console.log("month quantity", activityMonthQuantity);
-
-				if (materialAggregatedValues[itemName]) {
-					materialAggregatedValues[itemName] += activityMonthQuantity * materialItem.qty;
-				} else {
-					materialAggregatedValues[itemName] = activityMonthQuantity * materialItem.qty;
-				}
-			}
-			console.log("material aggregate", materialAggregatedValues);
-
-			for (var i = 0; i < frm.doc.material_detail_summarized_by_month_section_a.length; i++) {
-				var currentItem = frm.doc.material_detail_summarized_by_month_section_a[i];
-				console.log("cureiejireb", currentItem)
-				var itemName = currentItem.item;
-				var aggregatedValueForType = materialAggregatedValues[itemName];
-
-				if (aggregatedValueForType) {
-					currentItem.op_m_m3 = aggregatedValueForType;
-				} else {
-					currentItem.op_m_m3 = 0;
-				}
-			}
-
-			frm.refresh_field("material_detail_summarized_by_month_section_a");
-		}
-
-		// Call the material function
-		calculateMaterialValues();
-
-
+		calculateMachineryValues(frm, cdt, cdn, "3");
+		calculateMaterialValues(frm, cdt, cdn, "3");
+		calculateManpowerValues(frm, cdt, cdn, "3");
 	},
 	m_4: function(frm, cdt, cdn) {
-		console.log("row")
-
-		// Create an object to store aggregated values for machinery type
-		var machineryAggregatedValues = {};
-
-		// Iterate through the machinery array
-		for (var i = 0; i < frm.doc.machinery.length; i++) {
-			var machineryItem = frm.doc.machinery[i];
-			var type = machineryItem.type;
-			var activityMonthQuantity = 0;
-
-			for (var j = 0; j < frm.doc.operational_plan_detail_one1.length; j++) {
-				var monthData = frm.doc.operational_plan_detail_one1[j];
-				if (monthData.activity == machineryItem.activity) { // Compare activity
-					activityMonthQuantity = monthData.m_4 || 0;
-					console.log("activity month quantity", activityMonthQuantity)
-					break;
-				}
-			}
-
-			if (machineryAggregatedValues[type]) {
-				// If type already exists in machineryAggregatedValues, add the value
-				machineryAggregatedValues[type] += activityMonthQuantity * machineryItem.uf * machineryItem.efficency * machineryItem.item_no / machineryItem.productivity;
-			} else {
-				// If type doesn't exist, assign the value
-				machineryAggregatedValues[type] = activityMonthQuantity * machineryItem.uf * machineryItem.efficency * machineryItem.item_no / machineryItem.productivity;
-			}
-		}
-		console.log("AGGRICAGE", machineryAggregatedValues)
-
-		// Iterate through the machinary_detail_summarized_by_month_section_a array
-		for (var i = 0; i < frm.doc.machinary_detail_summarized_by_month_section_a.length; i++) {
-			var currentItem = frm.doc.machinary_detail_summarized_by_month_section_a[i];
-			var type = currentItem.type;
-			var aggregatedValueForType = machineryAggregatedValues[type];
-
-			if (aggregatedValueForType) {
-				currentItem.op_e_m4 = aggregatedValueForType;
-			} else {
-				currentItem.op_e_m4 = 0; // or handle the case where there is no aggregated value for the type
-			}
-		}
-
-		frm.refresh_field("machinary_detail_summarized_by_month_section_a");
-
-
-		// Function to calculate manpower values
-		function calculateManpowerValues() {
-			var manpowerAggregatedValues = {};
-
-			// Iterate through the manpower array
-			for (var i = 0; i < frm.doc.manpower1.length; i++) {
-				var manpowerItem = frm.doc.manpower1[i];
-				console.log("manp ower item", manpowerItem)
-				var job_title = manpowerItem.job_title;
-				var activityMonthQuantity = 0;
-
-				for (var j = 0; j < frm.doc.operational_plan_detail_one1.length; j++) {
-					var monthData = frm.doc.operational_plan_detail_one1[j];
-					if (monthData.activity == manpowerItem.activity) {
-						activityMonthQuantity = monthData.m_4 || 0;
-						break;
-					}
-				}
-				console.log("monthe qunttity", activityMonthQuantity)
-
-				if (manpowerAggregatedValues[job_title]) {
-					manpowerAggregatedValues[job_title] += activityMonthQuantity * (manpowerItem.uf * manpowerItem.li_permanent * manpowerItem.mp_number) / manpowerItem.productivity;
-				} else {
-					manpowerAggregatedValues[job_title] = activityMonthQuantity * (manpowerItem.uf * manpowerItem.li_permanent * manpowerItem.mp_number) / manpowerItem.productivity;
-				}
-			}
-			console.log("manpoere aggrirgate", manpowerAggregatedValues);
-
-			for (var i = 0; i < frm.doc.manpower_detail_summarized_by_month_section_a.length; i++) {
-				var currentItem = frm.doc.manpower_detail_summarized_by_month_section_a[i];
-				var job_title = currentItem.job_title;
-				var aggregatedValueForType = manpowerAggregatedValues[job_title];
-
-				if (aggregatedValueForType) {
-					currentItem.op_mp_m4 = aggregatedValueForType;
-				} else {
-					currentItem.op_mp_m4 = 0;
-				}
-			}
-
-			frm.refresh_field("manpower_detail_summarized_by_month_section_a");
-		}
-
-		// Call the manpower function
-		calculateManpowerValues();
-
-function calculateMaterialValues() {
-    var materialAggregatedValues = {};
-
-    // Iterate through the material1 array
-    for (var i = 0; i < frm.doc.material1.length; i++) {
-        var materialItem = frm.doc.material1[i];
-        console.log("material item", materialItem);
-        var itemName = materialItem.item1;
-        var activityMonthQuantity = 0;
-
-        for (var j = 0; j < frm.doc.operational_plan_detail_one1.length; j++) {
-            var monthData = frm.doc.operational_plan_detail_one1[j];
-            activityMonthQuantity = monthData.m_4 || 0;
-            break; // This break statement might need to be reviewed depending on your logic
-        }
-
-        console.log("month quantity", activityMonthQuantity);
-
-        if (materialAggregatedValues[itemName]) {
-            materialAggregatedValues[itemName] += activityMonthQuantity * materialItem.qty;
-        } else {
-            materialAggregatedValues[itemName] = activityMonthQuantity * materialItem.qty;
-        }
-    }
-    console.log("material aggregate", materialAggregatedValues);
-
-    for (var i = 0; i < frm.doc.material_detail_summarized_by_month_section_a.length; i++) {
-        var currentItem = frm.doc.material_detail_summarized_by_month_section_a[i];
-        console.log("cureiejireb", currentItem)
-        var itemName = currentItem.item;
-        var aggregatedValueForType = materialAggregatedValues[itemName];
-
-        if (aggregatedValueForType) {
-            currentItem.op_m_m4 = aggregatedValueForType;
-        } else {
-            currentItem.op_m_m4 = 0;
-        }
-    }
-
-    frm.refresh_field("material_detail_summarized_by_month_section_a");
-}
-
-// Call the material function
-calculateMaterialValues();
-
+		calculateMachineryValues(frm, cdt, cdn, "4");
+		calculateMaterialValues(frm, cdt, cdn, "4");
+		calculateManpowerValues(frm, cdt, cdn, "4");
 	},
 	m_5: function(frm, cdt, cdn) {
-		console.log("row")
-
-		// Create an object to store aggregated values for machinery type
-		var machineryAggregatedValues = {};
-
-		// Iterate through the machinery array
-		for (var i = 0; i < frm.doc.machinery.length; i++) {
-			var machineryItem = frm.doc.machinery[i];
-			var type = machineryItem.type;
-			var activityMonthQuantity = 0;
-
-			for (var j = 0; j < frm.doc.operational_plan_detail_one1.length; j++) {
-				var monthData = frm.doc.operational_plan_detail_one1[j];
-				if (monthData.activity == machineryItem.activity) { // Compare activity
-					activityMonthQuantity = monthData.m_5 || 0;
-					console.log("activity month quantity", activityMonthQuantity)
-					break;
-				}
-			}
-
-			if (machineryAggregatedValues[type]) {
-				// If type already exists in machineryAggregatedValues, add the value
-				machineryAggregatedValues[type] += activityMonthQuantity * machineryItem.uf * machineryItem.efficency * machineryItem.item_no / machineryItem.productivity;
-			} else {
-				// If type doesn't exist, assign the value
-				machineryAggregatedValues[type] = activityMonthQuantity * machineryItem.uf * machineryItem.efficency * machineryItem.item_no / machineryItem.productivity;
-			}
-		}
-		console.log("AGGRICAGE", machineryAggregatedValues)
-
-		// Iterate through the machinary_detail_summarized_by_month_section_a array
-		for (var i = 0; i < frm.doc.machinary_detail_summarized_by_month_section_a.length; i++) {
-			var currentItem = frm.doc.machinary_detail_summarized_by_month_section_a[i];
-			var type = currentItem.type;
-			var aggregatedValueForType = machineryAggregatedValues[type];
-
-			if (aggregatedValueForType) {
-				currentItem.op_e_m5 = aggregatedValueForType;
-			} else {
-				currentItem.op_e_m5 = 0; // or handle the case where there is no aggregated value for the type
-			}
-		}
-
-		frm.refresh_field("machinary_detail_summarized_by_month_section_a");
-
-
-		// Function to calculate manpower values
-		function calculateManpowerValues() {
-			var manpowerAggregatedValues = {};
-
-			// Iterate through the manpower array
-			for (var i = 0; i < frm.doc.manpower1.length; i++) {
-				var manpowerItem = frm.doc.manpower1[i];
-				console.log("manp ower item", manpowerItem)
-				var job_title = manpowerItem.job_title;
-				var activityMonthQuantity = 0;
-
-				for (var j = 0; j < frm.doc.operational_plan_detail_one1.length; j++) {
-					var monthData = frm.doc.operational_plan_detail_one1[j];
-					if (monthData.activity == manpowerItem.activity) {
-						activityMonthQuantity = monthData.m_5 || 0;
-						break;
-					}
-				}
-				console.log("monthe qunttity", activityMonthQuantity)
-
-				if (manpowerAggregatedValues[job_title]) {
-					manpowerAggregatedValues[job_title] += activityMonthQuantity * (manpowerItem.uf * manpowerItem.li_permanent * manpowerItem.mp_number) / manpowerItem.productivity;
-				} else {
-					manpowerAggregatedValues[job_title] = activityMonthQuantity * (manpowerItem.uf * manpowerItem.li_permanent * manpowerItem.mp_number) / manpowerItem.productivity;
-				}
-			}
-			console.log("manpoere aggrirgate", manpowerAggregatedValues);
-
-			for (var i = 0; i < frm.doc.manpower_detail_summarized_by_month_section_a.length; i++) {
-				var currentItem = frm.doc.manpower_detail_summarized_by_month_section_a[i];
-				var job_title = currentItem.job_title;
-				var aggregatedValueForType = manpowerAggregatedValues[job_title];
-
-				if (aggregatedValueForType) {
-					currentItem.op_mp_m5 = aggregatedValueForType;
-				} else {
-					currentItem.op_mp_m5 = 0;
-				}
-			}
-
-			frm.refresh_field("manpower_detail_summarized_by_month_section_a");
-		}
-
-		// Call the manpower function
-		calculateManpowerValues();
-
-		function calculateMaterialValues() {
-			var materialAggregatedValues = {};
-
-			// Iterate through the material1 array
-			for (var i = 0; i < frm.doc.material1.length; i++) {
-				var materialItem = frm.doc.material1[i];
-				console.log("material item", materialItem);
-				var itemName = materialItem.item1;
-				var activityMonthQuantity = 0;
-
-				for (var j = 0; j < frm.doc.operational_plan_detail_one1.length; j++) {
-					var monthData = frm.doc.operational_plan_detail_one1[j];
-					if (monthData.activity == materialItem.activity) {
-						activityMonthQuantity = monthData.m_5 || 0;
-						break;
-					}
-				}
-				console.log("month quantity", activityMonthQuantity);
-
-				if (materialAggregatedValues[itemName]) {
-					materialAggregatedValues[itemName] += activityMonthQuantity * materialItem.qty;
-				} else {
-					materialAggregatedValues[itemName] = activityMonthQuantity * materialItem.qty;
-				}
-			}
-			console.log("material aggregate", materialAggregatedValues);
-
-			for (var i = 0; i < frm.doc.material_detail_summarized_by_month_section_a.length; i++) {
-				var currentItem = frm.doc.material_detail_summarized_by_month_section_a[i];
-				console.log("cureiejireb", currentItem)
-				var itemName = currentItem.item;
-				var aggregatedValueForType = materialAggregatedValues[itemName];
-
-				if (aggregatedValueForType) {
-					currentItem.op_m_m5 = aggregatedValueForType;
-				} else {
-					currentItem.op_m_m5 = 0;
-				}
-			}
-
-			frm.refresh_field("material_detail_summarized_by_month_section_a");
-		}
-
-		// Call the material function
-		calculateMaterialValues();
-
-
+		calculateMachineryValues(frm, cdt, cdn, "5");
+		calculateMaterialValues(frm, cdt, cdn, "5");
+		calculateManpowerValues(frm, cdt, cdn, "5");
 	},
 	m_6: function(frm, cdt, cdn) {
-		console.log("row")
-
-		// Create an object to store aggregated values for machinery type
-		var machineryAggregatedValues = {};
-
-		// Iterate through the machinery array
-		for (var i = 0; i < frm.doc.machinery.length; i++) {
-			var machineryItem = frm.doc.machinery[i];
-			var type = machineryItem.type;
-			var activityMonthQuantity = 0;
-
-			for (var j = 0; j < frm.doc.operational_plan_detail_one1.length; j++) {
-				var monthData = frm.doc.operational_plan_detail_one1[j];
-				if (monthData.activity == machineryItem.activity) { // Compare activity
-					activityMonthQuantity = monthData.m_6 || 0;
-					console.log("activity month quantity", activityMonthQuantity)
-					break;
-				}
-			}
-
-			if (machineryAggregatedValues[type]) {
-				// If type already exists in machineryAggregatedValues, add the value
-				machineryAggregatedValues[type] += activityMonthQuantity * machineryItem.uf * machineryItem.efficency * machineryItem.item_no / machineryItem.productivity;
-			} else {
-				// If type doesn't exist, assign the value
-				machineryAggregatedValues[type] = activityMonthQuantity * machineryItem.uf * machineryItem.efficency * machineryItem.item_no / machineryItem.productivity;
-			}
-		}
-		console.log("AGGRICAGE", machineryAggregatedValues)
-
-		// Iterate through the machinary_detail_summarized_by_month_section_a array
-		for (var i = 0; i < frm.doc.machinary_detail_summarized_by_month_section_a.length; i++) {
-			var currentItem = frm.doc.machinary_detail_summarized_by_month_section_a[i];
-			var type = currentItem.type;
-			var aggregatedValueForType = machineryAggregatedValues[type];
-
-			if (aggregatedValueForType) {
-				currentItem.op_e_m6 = aggregatedValueForType;
-			} else {
-				currentItem.op_e_m6 = 0; // or handle the case where there is no aggregated value for the type
-			}
-		}
-
-		frm.refresh_field("machinary_detail_summarized_by_month_section_a");
-
-
-		// Function to calculate manpower values
-		function calculateManpowerValues() {
-			var manpowerAggregatedValues = {};
-
-			// Iterate through the manpower array
-			for (var i = 0; i < frm.doc.manpower1.length; i++) {
-				var manpowerItem = frm.doc.manpower1[i];
-				console.log("manp ower item", manpowerItem)
-				var job_title = manpowerItem.job_title;
-				var activityMonthQuantity = 0;
-
-				for (var j = 0; j < frm.doc.operational_plan_detail_one1.length; j++) {
-					var monthData = frm.doc.operational_plan_detail_one1[j];
-					if (monthData.activity == manpowerItem.activity) {
-						activityMonthQuantity = monthData.m_6 || 0;
-						break;
-					}
-				}
-				console.log("monthe qunttity", activityMonthQuantity)
-
-				if (manpowerAggregatedValues[job_title]) {
-					manpowerAggregatedValues[job_title] += activityMonthQuantity * (manpowerItem.uf * manpowerItem.li_permanent * manpowerItem.mp_number) / manpowerItem.productivity;
-				} else {
-					manpowerAggregatedValues[job_title] = activityMonthQuantity * (manpowerItem.uf * manpowerItem.li_permanent * manpowerItem.mp_number) / manpowerItem.productivity;
-				}
-			}
-			console.log("manpoere aggrirgate", manpowerAggregatedValues);
-
-			for (var i = 0; i < frm.doc.manpower_detail_summarized_by_month_section_a.length; i++) {
-				var currentItem = frm.doc.manpower_detail_summarized_by_month_section_a[i];
-				var job_title = currentItem.job_title;
-				var aggregatedValueForType = manpowerAggregatedValues[job_title];
-
-				if (aggregatedValueForType) {
-					currentItem.op_mp_m6 = aggregatedValueForType;
-				} else {
-					currentItem.op_mp_m6 = 0;
-				}
-			}
-
-			frm.refresh_field("manpower_detail_summarized_by_month_section_a");
-		}
-
-		// Call the manpower function
-		calculateManpowerValues();
-
-		function calculateMaterialValues() {
-			var materialAggregatedValues = {};
-
-			// Iterate through the material1 array
-			for (var i = 0; i < frm.doc.material1.length; i++) {
-				var materialItem = frm.doc.material1[i];
-				console.log("material item", materialItem);
-				var itemName = materialItem.item1;
-				var activityMonthQuantity = 0;
-
-				for (var j = 0; j < frm.doc.operational_plan_detail_one1.length; j++) {
-					var monthData = frm.doc.operational_plan_detail_one1[j];
-					if (monthData.activity == materialItem.activity) {
-						activityMonthQuantity = monthData.m_6 || 0;
-						break;
-					}
-				}
-				console.log("month quantity", activityMonthQuantity);
-
-				if (materialAggregatedValues[itemName]) {
-					materialAggregatedValues[itemName] += activityMonthQuantity * materialItem.qty;
-				} else {
-					materialAggregatedValues[itemName] = activityMonthQuantity * materialItem.qty;
-				}
-			}
-			console.log("material aggregate", materialAggregatedValues);
-
-			for (var i = 0; i < frm.doc.material_detail_summarized_by_month_section_a.length; i++) {
-				var currentItem = frm.doc.material_detail_summarized_by_month_section_a[i];
-				console.log("cureiejireb", currentItem)
-				var itemName = currentItem.item;
-				var aggregatedValueForType = materialAggregatedValues[itemName];
-
-				if (aggregatedValueForType) {
-					currentItem.op_m_m6 = aggregatedValueForType;
-				} else {
-					currentItem.op_m_m6 = 0;
-				}
-			}
-
-			frm.refresh_field("material_detail_summarized_by_month_section_a");
-		}
-
-		// Call the material function
-		calculateMaterialValues();
-
-
+		calculateMachineryValues(frm, cdt, cdn, "6");
+		calculateMaterialValues(frm, cdt, cdn, "6");
+		calculateManpowerValues(frm, cdt, cdn, "6");
 	},
 });
+frappe.ui.form.on('Operational Plan Detail Two2', {
+	m_7: function(frm, cdt, cdn) {
+		calculateMachineryValuesB(frm, cdt, cdn, "7");
+		calculateMaterialValuesB(frm, cdt, cdn, "7");
+		calculateManpowerValuesB(frm, cdt, cdn, "7");
+	},
+	m_8: function(frm, cdt, cdn) {
+		calculateMachineryValuesB(frm, cdt, cdn, "8");
+		calculateMaterialValuesB(frm, cdt, cdn, "8");
+		calculateManpowerValuesB(frm, cdt, cdn, "8");
+	},
+	m_9: function(frm, cdt, cdn) {
+		calculateMachineryValuesB(frm, cdt, cdn, "9");
+		calculateMaterialValuesB(frm, cdt, cdn, "9");
+		calculateManpowerValuesB(frm, cdt, cdn, "9");
+	},
+	m_10: function(frm, cdt, cdn) {
+		calculateMachineryValuesB(frm, cdt, cdn, "10");
+		calculateMaterialValuesB(frm, cdt, cdn, "10");
+		calculateManpowerValuesB(frm, cdt, cdn, "10");
+	},
+	m_11: function(frm, cdt, cdn) {
+		calculateMachineryValuesB(frm, cdt, cdn, "11");
+		calculateMaterialValuesB(frm, cdt, cdn, "11");
+		calculateManpowerValuesB(frm, cdt, cdn, "11");
+	},
+	m_12: function(frm, cdt, cdn) {
+		calculateMachineryValuesB(frm, cdt, cdn, "12");
+		calculateMaterialValuesB(frm, cdt, cdn, "12");
+		calculateManpowerValuesB(frm, cdt, cdn, "12");
+	},
+});
+
+function calculateMaterialValues(frm, cdt, cdn, m) {
+	var materialAggregatedValues = {};
+
+	// Iterate through the material1 array
+	for (var i = 0; i < frm.doc.material1.length; i++) {
+		var materialItem = frm.doc.material1[i];
+		console.log("material item", materialItem);
+		var itemName = materialItem.item1;
+		var activityMonthQuantity = 0;
+
+		for (var j = 0; j < frm.doc.operational_plan_detail_one1.length; j++) {
+			var monthData = frm.doc.operational_plan_detail_one1[j];
+			if (monthData.activity == materialItem.activity) {
+				activityMonthQuantity = monthData["m_" + m] || 0;
+				break;
+			}
+		}
+		console.log("month quantity", activityMonthQuantity);
+
+		if (materialAggregatedValues[itemName]) {
+			materialAggregatedValues[itemName] += activityMonthQuantity * materialItem.qty;
+		} else {
+			materialAggregatedValues[itemName] = activityMonthQuantity * materialItem.qty;
+		}
+	}
+	console.log("material aggregate", materialAggregatedValues);
+
+	for (var i = 0; i < frm.doc.material_detail_summarized_by_month_section_a.length; i++) {
+		var currentItem = frm.doc.material_detail_summarized_by_month_section_a[i];
+		console.log("cureiejireb", currentItem)
+		var itemName = currentItem.item;
+		var aggregatedValueForType = materialAggregatedValues[itemName];
+
+		if (aggregatedValueForType) {
+			currentItem["op_m_m" + m] = aggregatedValueForType;
+		} else {
+			currentItem["op_m_m" + m] = 0;
+		}
+	}
+
+	frm.refresh_field("material_detail_summarized_by_month_section_a");
+}
+function calculateMaterialValuesB(frm, cdt, cdn, m) {
+	var materialAggregatedValues = {};
+
+	// Iterate through the material1 array
+	for (var i = 0; i < frm.doc.material1.length; i++) {
+		var materialItem = frm.doc.material1[i];
+		console.log("material item", materialItem);
+		var itemName = materialItem.item1;
+		var activityMonthQuantity = 0;
+
+		for (var j = 0; j < frm.doc.operational_plan_detail_two2.length; j++) {
+			var monthData = frm.doc.operational_plan_detail_two2[j];
+			if (monthData.activity == materialItem.activity) {
+				activityMonthQuantity = monthData["m_" + m] || 0;
+				break;
+			}
+		}
+		console.log("month quantity", activityMonthQuantity);
+
+		if (materialAggregatedValues[itemName]) {
+			materialAggregatedValues[itemName] += activityMonthQuantity * materialItem.qty;
+		} else {
+			materialAggregatedValues[itemName] = activityMonthQuantity * materialItem.qty;
+		}
+	}
+	console.log("material aggregate", materialAggregatedValues);
+
+	for (var i = 0; i < frm.doc.material_detail_summarized_by_month_section_b.length; i++) {
+		var currentItem = frm.doc.material_detail_summarized_by_month_section_b[i];
+		console.log("cureiejireb", currentItem)
+		var itemName = currentItem.item;
+		var aggregatedValueForType = materialAggregatedValues[itemName];
+
+		if (aggregatedValueForType) {
+			currentItem["op_m_m" + m] = aggregatedValueForType;
+		} else {
+			currentItem["op_m_m" + m] = 0;
+		}
+	}
+
+	frm.refresh_field("material_detail_summarized_by_month_section_b");
+}
+
+function calculateManpowerValues(frm, cdt, cdn, m) {
+	var manpowerAggregatedValues = {};
+
+	// Iterate through the manpower array
+	for (var i = 0; i < frm.doc.manpower1.length; i++) {
+		var manpowerItem = frm.doc.manpower1[i];
+		console.log("manp ower item", manpowerItem)
+		var job_title = manpowerItem.job_title;
+		var activityMonthQuantity = 0;
+
+		for (var j = 0; j < frm.doc.operational_plan_detail_one1.length; j++) {
+			var monthData = frm.doc.operational_plan_detail_one1[j];
+			if (monthData.activity == manpowerItem.activity) {
+				activityMonthQuantity = monthData["m_" + m] || 0;
+				break;
+			}
+		}
+		console.log("monthe qunttity", activityMonthQuantity)
+
+		if (manpowerAggregatedValues[job_title]) {
+			manpowerAggregatedValues[job_title] += activityMonthQuantity * (manpowerItem.uf * manpowerItem.li_permanent * manpowerItem.mp_number) / manpowerItem.productivity;
+		} else {
+			manpowerAggregatedValues[job_title] = activityMonthQuantity * (manpowerItem.uf * manpowerItem.li_permanent * manpowerItem.mp_number) / manpowerItem.productivity;
+		}
+	}
+	console.log("manpoere aggrirgate", manpowerAggregatedValues);
+
+	for (var i = 0; i < frm.doc.manpower_detail_summarized_by_month_section_a.length; i++) {
+		var currentItem = frm.doc.manpower_detail_summarized_by_month_section_a[i];
+		var job_title = currentItem.job_title;
+		var aggregatedValueForType = manpowerAggregatedValues[job_title];
+
+		if (aggregatedValueForType) {
+			currentItem["op_mp_m" + m] = aggregatedValueForType;
+		} else {
+			currentItem["op_mp_m" + m] = 0;
+		}
+	}
+
+	frm.refresh_field("manpower_detail_summarized_by_month_section_a");
+}
+function calculateManpowerValuesB(frm, cdt, cdn, m) {
+	var manpowerAggregatedValues = {};
+
+	// Iterate through the manpower array
+	for (var i = 0; i < frm.doc.manpower1.length; i++) {
+		var manpowerItem = frm.doc.manpower1[i];
+		console.log("manp ower item", manpowerItem)
+		var job_title = manpowerItem.job_title;
+		var activityMonthQuantity = 0;
+
+		for (var j = 0; j < frm.doc.operational_plan_detail_two2.length; j++) {
+			var monthData = frm.doc.operational_plan_detail_two2[j];
+			if (monthData.activity == manpowerItem.activity) {
+				activityMonthQuantity = monthData["m_" + m] || 0;
+				break;
+			}
+		}
+		console.log("monthe qunttity", activityMonthQuantity)
+
+		if (manpowerAggregatedValues[job_title]) {
+			manpowerAggregatedValues[job_title] += activityMonthQuantity * (manpowerItem.uf * manpowerItem.li_permanent * manpowerItem.mp_number) / manpowerItem.productivity;
+		} else {
+			manpowerAggregatedValues[job_title] = activityMonthQuantity * (manpowerItem.uf * manpowerItem.li_permanent * manpowerItem.mp_number) / manpowerItem.productivity;
+		}
+	}
+	console.log("manpoere aggrirgate", manpowerAggregatedValues);
+
+	for (var i = 0; i < frm.doc.manpower_detail_summarized_by_month_section_b.length; i++) {
+		var currentItem = frm.doc.manpower_detail_summarized_by_month_section_b[i];
+		var job_title = currentItem.job_title;
+		var aggregatedValueForType = manpowerAggregatedValues[job_title];
+
+		if (aggregatedValueForType) {
+			currentItem["op_mp_m" + m] = aggregatedValueForType;
+		} else {
+			currentItem["op_mp_m" + m] = 0;
+		}
+	}
+
+	frm.refresh_field("manpower_detail_summarized_by_month_section_b");
+}
+
+function calculateMachineryValues(frm, cdt, cdn, m) {
+	var machineryAggregatedValues = {};
+
+	// Iterate through the machinery array
+	for (var i = 0; i < frm.doc.machinery.length; i++) {
+		var machineryItem = frm.doc.machinery[i];
+		var type = machineryItem.type;
+		var activityMonthQuantity = 0;
+
+		for (var j = 0; j < frm.doc.operational_plan_detail_one1.length; j++) {
+			var monthData = frm.doc.operational_plan_detail_one1[j];
+			if (monthData.activity == machineryItem.activity) { // Compare activity
+				activityMonthQuantity = monthData["m_" + m] || 0;
+				console.log("activity month quantity", activityMonthQuantity)
+				break;
+			}
+		}
+
+		if (machineryAggregatedValues[type]) {
+			// If type already exists in machineryAggregatedValues, add the value
+			machineryAggregatedValues[type] += activityMonthQuantity * machineryItem.uf * machineryItem.efficency * machineryItem.item_no / machineryItem.productivity;
+		} else {
+			// If type doesn't exist, assign the value
+			machineryAggregatedValues[type] = activityMonthQuantity * machineryItem.uf * machineryItem.efficency * machineryItem.item_no / machineryItem.productivity;
+		}
+	}
+	console.log("AGGRICAGE", machineryAggregatedValues)
+
+	// Iterate through the machinary_detail_summarized_by_month_section_a array
+	for (var i = 0; i < frm.doc.machinary_detail_summarized_by_month_section_a.length; i++) {
+		var currentItem = frm.doc.machinary_detail_summarized_by_month_section_a[i];
+		var type = currentItem.type;
+		var aggregatedValueForType = machineryAggregatedValues[type];
+
+		if (aggregatedValueForType) {
+			currentItem["op_e_m" + m] = aggregatedValueForType;
+		} else {
+			currentItem["op_e_m" + m] = 0; // or handle the case where there is no aggregated value for the type
+		}
+	}
+
+	frm.refresh_field("machinary_detail_summarized_by_month_section_a");
+}
+function calculateMachineryValuesB(frm, cdt, cdn, m) {
+	var machineryAggregatedValues = {};
+
+	// Iterate through the machinery array
+	for (var i = 0; i < frm.doc.machinery.length; i++) {
+		var machineryItem = frm.doc.machinery[i];
+		var type = machineryItem.type;
+		var activityMonthQuantity = 0;
+
+		for (var j = 0; j < frm.doc.operational_plan_detail_two2.length; j++) {
+			var monthData = frm.doc.operational_plan_detail_two2[j];
+			if (monthData.activity == machineryItem.activity) { // Compare activity
+				activityMonthQuantity = monthData["m_" + m] || 0;
+				console.log("activity month quantity", activityMonthQuantity)
+				break;
+			}
+		}
+
+		if (machineryAggregatedValues[type]) {
+			// If type already exists in machineryAggregatedValues, add the value
+			machineryAggregatedValues[type] += activityMonthQuantity * machineryItem.uf * machineryItem.efficency * machineryItem.item_no / machineryItem.productivity;
+		} else {
+			// If type doesn't exist, assign the value
+			machineryAggregatedValues[type] = activityMonthQuantity * machineryItem.uf * machineryItem.efficency * machineryItem.item_no / machineryItem.productivity;
+		}
+	}
+	console.log("AGGRICAGE", machineryAggregatedValues)
+
+	// Iterate through the machinary_detail_summarized_by_month_section_a array
+	for (var i = 0; i < frm.doc.machinary_detail_summarized_by_month_section_b.length; i++) {
+		var currentItem = frm.doc.machinary_detail_summarized_by_month_section_b[i];
+		var type = currentItem.type;
+		var aggregatedValueForType = machineryAggregatedValues[type];
+
+		if (aggregatedValueForType) {
+			currentItem["op_e_m" + m] = aggregatedValueForType;
+		} else {
+			currentItem["op_e_m" + m] = 0; // or handle the case where there is no aggregated value for the type
+		}
+	}
+
+	frm.refresh_field("machinary_detail_summarized_by_month_section_b");
+}
 
 
 
 frappe.ui.form.on('Operational Plan Detail Two2', {
 	m_7: function(frm, cdt, cdn) {
-		console.log("row")
-
-		// Create an object to store aggregated values for machinery type
-		var machineryAggregatedValues = {};
-
-		// Iterate through the machinery array
-		for (var i = 0; i < frm.doc.machinery.length; i++) {
-			var machineryItem = frm.doc.machinery[i];
-			var type = machineryItem.type;
-			var activityMonthQuantity = 0;
-
-			for (var j = 0; j < frm.doc.operational_plan_detail_two2.length; j++) {
-				var monthData = frm.doc.operational_plan_detail_two2[j];
-				if (monthData.activity == machineryItem.activity) { // Compare activity
-					activityMonthQuantity = monthData.m_7 || 0;
-					console.log("activity month quantity", activityMonthQuantity)
-					break;
-				}
-			}
-
-			if (machineryAggregatedValues[type]) {
-				// If type already exists in machineryAggregatedValues, add the value
-				machineryAggregatedValues[type] += activityMonthQuantity * machineryItem.uf * machineryItem.efficency * machineryItem.item_no / machineryItem.productivity;
-			} else {
-				// If type doesn't exist, assign the value
-				machineryAggregatedValues[type] = activityMonthQuantity * machineryItem.uf * machineryItem.efficency * machineryItem.item_no / machineryItem.productivity;
-			}
-		}
-		console.log("AGGRICAGE", machineryAggregatedValues)
-
-		// Iterate through the machinary_detail_summarized_by_month_section_a array
-		for (var i = 0; i < frm.doc.machinary_detail_summarized_by_month_section_b.length; i++) {
-			var currentItem = frm.doc.machinary_detail_summarized_by_month_section_b[i];
-			var type = currentItem.type;
-			var aggregatedValueForType = machineryAggregatedValues[type];
-
-			if (aggregatedValueForType) {
-				currentItem.op_e_m7 = aggregatedValueForType;
-			} else {
-				currentItem.op_e_m7 = 0; // or handle the case where there is no aggregated value for the type
-			}
-		}
-
-		frm.refresh_field("machinary_detail_summarized_by_month_section_b");
-
-
-		// Function to calculate manpower values
-		function calculateManpowerValues() {
-			var manpowerAggregatedValues = {};
-
-			// Iterate through the manpower array
-			for (var i = 0; i < frm.doc.manpower1.length; i++) {
-				var manpowerItem = frm.doc.manpower1[i];
-				console.log("manp ower item", manpowerItem)
-				var job_title = manpowerItem.job_title;
-				var activityMonthQuantity = 0;
-
-				for (var j = 0; j < frm.doc.operational_plan_detail_two2.length; j++) {
-					var monthData = frm.doc.operational_plan_detail_two2[j];
-					if (monthData.activity == manpowerItem.activity) {
-						activityMonthQuantity = monthData.m_7 || 0;
-						break;
-					}
-				}
-				console.log("monthe qunttity", activityMonthQuantity)
-
-				if (manpowerAggregatedValues[job_title]) {
-					manpowerAggregatedValues[job_title] += activityMonthQuantity * (manpowerItem.uf * manpowerItem.li_permanent * manpowerItem.mp_number) / manpowerItem.productivity;
-				} else {
-					manpowerAggregatedValues[job_title] = activityMonthQuantity * (manpowerItem.uf * manpowerItem.li_permanent * manpowerItem.mp_number) / manpowerItem.productivity;
-				}
-			}
-			console.log("manpoere aggrirgate", manpowerAggregatedValues);
-
-			for (var i = 0; i < frm.doc.manpower_detail_summarized_by_month_section_b.length; i++) {
-				var currentItem = frm.doc.manpower_detail_summarized_by_month_section_b[i];
-				var job_title = currentItem.job_title;
-				var aggregatedValueForType = manpowerAggregatedValues[job_title];
-
-				if (aggregatedValueForType) {
-					currentItem.op_mp_m7 = aggregatedValueForType;
-				} else {
-					currentItem.op_mp_m7 = 0;
-				}
-			}
-
-			frm.refresh_field("manpower_detail_summarized_by_month_section_b");
-		}
-
-		// Call the manpower function
-		calculateManpowerValues();
-
-		function calculateMaterialValues() {
-			var materialAggregatedValues = {};
-
-			// Iterate through the material1 array
-			for (var i = 0; i < frm.doc.material1.length; i++) {
-				var materialItem = frm.doc.material1[i];
-				console.log("material item", materialItem);
-				var itemName = materialItem.item1;
-				var activityMonthQuantity = 0;
-
-				for (var j = 0; j < frm.doc.operational_plan_detail_two2.length; j++) {
-					var monthData = frm.doc.operational_plan_detail_two2[j];
-					if (monthData.activity == materialItem.activity) {
-						activityMonthQuantity = monthData.m_7 || 0;
-						break;
-					}
-				}
-				console.log("month quantity", activityMonthQuantity);
-
-				if (materialAggregatedValues[itemName]) {
-					materialAggregatedValues[itemName] += activityMonthQuantity * materialItem.qty;
-				} else {
-					materialAggregatedValues[itemName] = activityMonthQuantity * materialItem.qty;
-				}
-			}
-			console.log("material aggregate", materialAggregatedValues);
-
-			for (var i = 0; i < frm.doc.material_detail_summarized_by_month_section_b.length; i++) {
-				var currentItem = frm.doc.material_detail_summarized_by_month_section_b[i];
-				console.log("cureiejireb", currentItem)
-				var itemName = currentItem.item;
-				var aggregatedValueForType = materialAggregatedValues[itemName];
-
-				if (aggregatedValueForType) {
-					currentItem.op_m_m7 = aggregatedValueForType;
-				} else {
-					currentItem.op_m_m7 = 0;
-				}
-			}
-
-			frm.refresh_field("material_detail_summarized_by_month_section_b");
-		}
-
-		// Call the material function
-		calculateMaterialValues();
-
-
+		calculateMachineryValuesB(frm, cdt, cdn, "7");
+		calculateMaterialValuesB(frm, cdt, cdn, "7");
+		calculateManpowerValuesB(frm, cdt, cdn, "7");
 	},
 	m_8: function(frm, cdt, cdn) {
-		console.log("row")
-
-		// Create an object to store aggregated values for machinery type
-		var machineryAggregatedValues = {};
-
-		// Iterate through the machinery array
-		for (var i = 0; i < frm.doc.machinery.length; i++) {
-			var machineryItem = frm.doc.machinery[i];
-			var type = machineryItem.type;
-			var activityMonthQuantity = 0;
-
-			for (var j = 0; j < frm.doc.operational_plan_detail_two2.length; j++) {
-				var monthData = frm.doc.operational_plan_detail_two2[j];
-				if (monthData.activity == machineryItem.activity) { // Compare activity
-					activityMonthQuantity = monthData.m_8 || 0;
-					console.log("activity month quantity", activityMonthQuantity)
-					break;
-				}
-			}
-
-			if (machineryAggregatedValues[type]) {
-				// If type already exists in machineryAggregatedValues, add the value
-				machineryAggregatedValues[type] += activityMonthQuantity * machineryItem.uf * machineryItem.efficency * machineryItem.item_no / machineryItem.productivity;
-			} else {
-				// If type doesn't exist, assign the value
-				machineryAggregatedValues[type] = activityMonthQuantity * machineryItem.uf * machineryItem.efficency * machineryItem.item_no / machineryItem.productivity;
-			}
-		}
-		console.log("AGGRICAGE", machineryAggregatedValues)
-
-		// Iterate through the machinary_detail_summarized_by_month_section_a array
-		for (var i = 0; i < frm.doc.machinary_detail_summarized_by_month_section_b.length; i++) {
-			var currentItem = frm.doc.machinary_detail_summarized_by_month_section_b[i];
-			var type = currentItem.type;
-			var aggregatedValueForType = machineryAggregatedValues[type];
-
-			if (aggregatedValueForType) {
-				currentItem.op_e_m8 = aggregatedValueForType;
-			} else {
-				currentItem.op_e_m8 = 0; // or handle the case where there is no aggregated value for the type
-			}
-		}
-
-		frm.refresh_field("machinary_detail_summarized_by_month_section_b");
-
-
-		// Function to calculate manpower values
-		function calculateManpowerValues() {
-			var manpowerAggregatedValues = {};
-
-			// Iterate through the manpower array
-			for (var i = 0; i < frm.doc.manpower1.length; i++) {
-				var manpowerItem = frm.doc.manpower1[i];
-				console.log("manp ower item", manpowerItem)
-				var job_title = manpowerItem.job_title;
-				var activityMonthQuantity = 0;
-
-				for (var j = 0; j < frm.doc.operational_plan_detail_two2.length; j++) {
-					var monthData = frm.doc.operational_plan_detail_two2[j];
-					if (monthData.activity == manpowerItem.activity) {
-						activityMonthQuantity = monthData.m_8 || 0;
-						break;
-					}
-				}
-				console.log("monthe qunttity", activityMonthQuantity)
-
-				if (manpowerAggregatedValues[job_title]) {
-					manpowerAggregatedValues[job_title] += activityMonthQuantity * (manpowerItem.uf * manpowerItem.li_permanent * manpowerItem.mp_number) / manpowerItem.productivity;
-				} else {
-					manpowerAggregatedValues[job_title] = activityMonthQuantity * (manpowerItem.uf * manpowerItem.li_permanent * manpowerItem.mp_number) / manpowerItem.productivity;
-				}
-			}
-			console.log("manpoere aggrirgate", manpowerAggregatedValues);
-
-			for (var i = 0; i < frm.doc.manpower_detail_summarized_by_month_section_b.length; i++) {
-				var currentItem = frm.doc.manpower_detail_summarized_by_month_section_b[i];
-				var job_title = currentItem.job_title;
-				var aggregatedValueForType = manpowerAggregatedValues[job_title];
-
-				if (aggregatedValueForType) {
-					currentItem.op_mp_m8 = aggregatedValueForType;
-				} else {
-					currentItem.op_mp_m8 = 0;
-				}
-			}
-
-			frm.refresh_field("manpower_detail_summarized_by_month_section_b");
-		}
-
-		// Call the manpower function
-		calculateManpowerValues();
-
-		function calculateMaterialValues() {
-			var materialAggregatedValues = {};
-
-			// Iterate through the material1 array
-			for (var i = 0; i < frm.doc.material1.length; i++) {
-				var materialItem = frm.doc.material1[i];
-				console.log("material item", materialItem);
-				var itemName = materialItem.item1;
-				var activityMonthQuantity = 0;
-
-				for (var j = 0; j < frm.doc.operational_plan_detail_two2.length; j++) {
-					var monthData = frm.doc.operational_plan_detail_two2[j];
-					if (monthData.activity == materialItem.activity) {
-						activityMonthQuantity = monthData.m_8 || 0;
-						break;
-					}
-				}
-				console.log("month quantity", activityMonthQuantity);
-
-				if (materialAggregatedValues[itemName]) {
-					materialAggregatedValues[itemName] += activityMonthQuantity * materialItem.qty;
-				} else {
-					materialAggregatedValues[itemName] = activityMonthQuantity * materialItem.qty;
-				}
-			}
-			console.log("material aggregate", materialAggregatedValues);
-
-			for (var i = 0; i < frm.doc.material_detail_summarized_by_month_section_b.length; i++) {
-				var currentItem = frm.doc.material_detail_summarized_by_month_section_b[i];
-				console.log("cureiejireb", currentItem)
-				var itemName = currentItem.item;
-				var aggregatedValueForType = materialAggregatedValues[itemName];
-
-				if (aggregatedValueForType) {
-					currentItem.op_m_m8 = aggregatedValueForType;
-				} else {
-					currentItem.op_m_m8 = 0;
-				}
-			}
-
-			frm.refresh_field("material_detail_summarized_by_month_section_b");
-		}
-
-		// Call the material function
-		calculateMaterialValues();
-
-
+		calculateMachineryValuesB(frm, cdt, cdn, "8");
+		calculateMaterialValuesB(frm, cdt, cdn, "8");
+		calculateManpowerValuesB(frm, cdt, cdn, "8");
 	},
 	m_9: function(frm, cdt, cdn) {
-		console.log("row")
-
-		// Create an object to store aggregated values for machinery type
-		var machineryAggregatedValues = {};
-
-		// Iterate through the machinery array
-		for (var i = 0; i < frm.doc.machinery.length; i++) {
-			var machineryItem = frm.doc.machinery[i];
-			var type = machineryItem.type;
-			var activityMonthQuantity = 0;
-
-			for (var j = 0; j < frm.doc.operational_plan_detail_two2.length; j++) {
-				var monthData = frm.doc.operational_plan_detail_two2[j];
-				if (monthData.activity == machineryItem.activity) { // Compare activity
-					activityMonthQuantity = monthData.m_9 || 0;
-					console.log("activity month quantity", activityMonthQuantity)
-					break;
-				}
-			}
-
-			if (machineryAggregatedValues[type]) {
-				// If type already exists in machineryAggregatedValues, add the value
-				machineryAggregatedValues[type] += activityMonthQuantity * machineryItem.uf * machineryItem.efficency * machineryItem.item_no / machineryItem.productivity;
-			} else {
-				// If type doesn't exist, assign the value
-				machineryAggregatedValues[type] = activityMonthQuantity * machineryItem.uf * machineryItem.efficency * machineryItem.item_no / machineryItem.productivity;
-			}
-		}
-		console.log("AGGRICAGE", machineryAggregatedValues)
-
-		// Iterate through the machinary_detail_summarized_by_month_section_a array
-		for (var i = 0; i < frm.doc.machinary_detail_summarized_by_month_section_b.length; i++) {
-			var currentItem = frm.doc.machinary_detail_summarized_by_month_section_b[i];
-			var type = currentItem.type;
-			var aggregatedValueForType = machineryAggregatedValues[type];
-
-			if (aggregatedValueForType) {
-				currentItem.op_e_m9 = aggregatedValueForType;
-			} else {
-				currentItem.op_e_m9 = 0; // or handle the case where there is no aggregated value for the type
-			}
-		}
-
-		frm.refresh_field("machinary_detail_summarized_by_month_section_b");
-
-
-		// Function to calculate manpower values
-		function calculateManpowerValues() {
-			var manpowerAggregatedValues = {};
-
-			// Iterate through the manpower array
-			for (var i = 0; i < frm.doc.manpower1.length; i++) {
-				var manpowerItem = frm.doc.manpower1[i];
-				console.log("manp ower item", manpowerItem)
-				var job_title = manpowerItem.job_title;
-				var activityMonthQuantity = 0;
-
-				for (var j = 0; j < frm.doc.operational_plan_detail_two2.length; j++) {
-					var monthData = frm.doc.operational_plan_detail_two2[j];
-					if (monthData.activity == manpowerItem.activity) {
-						activityMonthQuantity = monthData.m_9 || 0;
-						break;
-					}
-				}
-				console.log("monthe qunttity", activityMonthQuantity)
-
-				if (manpowerAggregatedValues[job_title]) {
-					manpowerAggregatedValues[job_title] += activityMonthQuantity * (manpowerItem.uf * manpowerItem.li_permanent * manpowerItem.mp_number) / manpowerItem.productivity;
-				} else {
-					manpowerAggregatedValues[job_title] = activityMonthQuantity * (manpowerItem.uf * manpowerItem.li_permanent * manpowerItem.mp_number) / manpowerItem.productivity;
-				}
-			}
-			console.log("manpoere aggrirgate", manpowerAggregatedValues);
-
-			for (var i = 0; i < frm.doc.manpower_detail_summarized_by_month_section_b.length; i++) {
-				var currentItem = frm.doc.manpower_detail_summarized_by_month_section_b[i];
-				var job_title = currentItem.job_title;
-				var aggregatedValueForType = manpowerAggregatedValues[job_title];
-
-				if (aggregatedValueForType) {
-					currentItem.op_mp_m9 = aggregatedValueForType;
-				} else {
-					currentItem.op_mp_m9 = 0;
-				}
-			}
-
-			frm.refresh_field("manpower_detail_summarized_by_month_section_b");
-		}
-
-		// Call the manpower function
-		calculateManpowerValues();
-
-		function calculateMaterialValues() {
-			var materialAggregatedValues = {};
-
-			// Iterate through the material1 array
-			for (var i = 0; i < frm.doc.material1.length; i++) {
-				var materialItem = frm.doc.material1[i];
-				console.log("material item", materialItem);
-				var itemName = materialItem.item1;
-				var activityMonthQuantity = 0;
-
-				for (var j = 0; j < frm.doc.operational_plan_detail_two2.length; j++) {
-					var monthData = frm.doc.operational_plan_detail_two2[j];
-					if (monthData.activity == materialItem.activity) {
-						activityMonthQuantity = monthData.m_9 || 0;
-						break;
-					}
-				}
-				console.log("month quantity", activityMonthQuantity);
-				console.log("material quantity", materialItem.material_no);
-
-				if (materialAggregatedValues[itemName]) {
-					materialAggregatedValues[itemName] += activityMonthQuantity * materialItem.qty;
-				} else {
-					materialAggregatedValues[itemName] = activityMonthQuantity * materialItem.qty;
-				}
-			}
-			console.log("material aggregate", materialAggregatedValues);
-
-			for (var i = 0; i < frm.doc.material_detail_summarized_by_month_section_b.length; i++) {
-				var currentItem = frm.doc.material_detail_summarized_by_month_section_b[i];
-				console.log("cureiejireb", currentItem)
-				var itemName = currentItem.item;
-				var aggregatedValueForType = materialAggregatedValues[itemName];
-
-				if (aggregatedValueForType) {
-					currentItem.op_m_m9 = aggregatedValueForType;
-				} else {
-					currentItem.op_m_m9 = 0;
-				}
-			}
-
-			frm.refresh_field("material_detail_summarized_by_month_section_b");
-		}
-
-		// Call the material function
-		calculateMaterialValues();
-
-
+		calculateMachineryValuesB(frm, cdt, cdn, "9");
+		calculateMaterialValuesB(frm, cdt, cdn, "9");
+		calculateManpowerValuesB(frm, cdt, cdn, "9");
 	},
 	m_10: function(frm, cdt, cdn) {
-		console.log("row")
-
-		// Create an object to store aggregated values for machinery type
-		var machineryAggregatedValues = {};
-
-		// Iterate through the machinery array
-		for (var i = 0; i < frm.doc.machinery.length; i++) {
-			var machineryItem = frm.doc.machinery[i];
-			var type = machineryItem.type;
-			var activityMonthQuantity = 0;
-
-			for (var j = 0; j < frm.doc.operational_plan_detail_two2.length; j++) {
-				var monthData = frm.doc.operational_plan_detail_two2[j];
-				if (monthData.activity == machineryItem.activity) { // Compare activity
-					activityMonthQuantity = monthData.m_10 || 0;
-					console.log("activity month quantity", activityMonthQuantity)
-					break;
-				}
-			}
-
-			if (machineryAggregatedValues[type]) {
-				// If type already exists in machineryAggregatedValues, add the value
-				machineryAggregatedValues[type] += activityMonthQuantity * machineryItem.uf * machineryItem.efficency * machineryItem.item_no / machineryItem.productivity;
-			} else {
-				// If type doesn't exist, assign the value
-				machineryAggregatedValues[type] = activityMonthQuantity * machineryItem.uf * machineryItem.efficency * machineryItem.item_no / machineryItem.productivity;
-			}
-		}
-		console.log("AGGRICAGE", machineryAggregatedValues)
-
-		// Iterate through the machinary_detail_summarized_by_month_section_a array
-		for (var i = 0; i < frm.doc.machinary_detail_summarized_by_month_section_b.length; i++) {
-			var currentItem = frm.doc.machinary_detail_summarized_by_month_section_b[i];
-			var type = currentItem.type;
-			var aggregatedValueForType = machineryAggregatedValues[type];
-
-			if (aggregatedValueForType) {
-				currentItem.op_e_m10 = aggregatedValueForType;
-			} else {
-				currentItem.op_e_m10 = 0; // or handle the case where there is no aggregated value for the type
-			}
-		}
-
-		frm.refresh_field("machinary_detail_summarized_by_month_section_b");
-
-
-		// Function to calculate manpower values
-		function calculateManpowerValues() {
-			var manpowerAggregatedValues = {};
-
-			// Iterate through the manpower array
-			for (var i = 0; i < frm.doc.manpower1.length; i++) {
-				var manpowerItem = frm.doc.manpower1[i];
-				console.log("manp ower item", manpowerItem)
-				var job_title = manpowerItem.job_title;
-				var activityMonthQuantity = 0;
-
-				for (var j = 0; j < frm.doc.operational_plan_detail_two2.length; j++) {
-					var monthData = frm.doc.operational_plan_detail_two2[j];
-					if (monthData.activity == manpowerItem.activity) {
-						activityMonthQuantity = monthData.m_10 || 0;
-						break;
-					}
-				}
-				console.log("monthe qunttity", activityMonthQuantity)
-
-				if (manpowerAggregatedValues[job_title]) {
-					manpowerAggregatedValues[job_title] += activityMonthQuantity * (manpowerItem.uf * manpowerItem.li_permanent * manpowerItem.mp_number) / manpowerItem.productivity;
-				} else {
-					manpowerAggregatedValues[job_title] = activityMonthQuantity * (manpowerItem.uf * manpowerItem.li_permanent * manpowerItem.mp_number) / manpowerItem.productivity;
-				}
-			}
-			console.log("manpoere aggrirgate", manpowerAggregatedValues);
-
-			for (var i = 0; i < frm.doc.manpower_detail_summarized_by_month_section_b.length; i++) {
-				var currentItem = frm.doc.manpower_detail_summarized_by_month_section_b[i];
-				var job_title = currentItem.job_title;
-				var aggregatedValueForType = manpowerAggregatedValues[job_title];
-
-				if (aggregatedValueForType) {
-					currentItem.op_mp_m10 = aggregatedValueForType;
-				} else {
-					currentItem.op_mp_m10 = 0;
-				}
-			}
-
-			frm.refresh_field("manpower_detail_summarized_by_month_section_b");
-		}
-
-		// Call the manpower function
-		calculateManpowerValues();
-
-		function calculateMaterialValues() {
-			var materialAggregatedValues = {};
-
-			// Iterate through the material1 array
-			for (var i = 0; i < frm.doc.material1.length; i++) {
-				var materialItem = frm.doc.material1[i];
-				console.log("material item", materialItem);
-				var itemName = materialItem.item1;
-				var activityMonthQuantity = 0;
-
-				for (var j = 0; j < frm.doc.operational_plan_detail_two2.length; j++) {
-					var monthData = frm.doc.operational_plan_detail_two2[j];
-					if (monthData.activity == materialItem.activity) {
-						activityMonthQuantity = monthData.m_10 || 0;
-						break;
-					}
-				}
-				console.log("month quantity", activityMonthQuantity);
-
-				if (materialAggregatedValues[itemName]) {
-					materialAggregatedValues[itemName] += activityMonthQuantity * materialItem.qty;
-				} else {
-					materialAggregatedValues[itemName] = activityMonthQuantity * materialItem.qty;
-				}
-			}
-			console.log("material aggregate", materialAggregatedValues);
-
-			for (var i = 0; i < frm.doc.material_detail_summarized_by_month_section_b.length; i++) {
-				var currentItem = frm.doc.material_detail_summarized_by_month_section_b[i];
-				console.log("cureiejireb", currentItem)
-				var itemName = currentItem.item;
-				var aggregatedValueForType = materialAggregatedValues[itemName];
-
-				if (aggregatedValueForType) {
-					currentItem.op_m_m10 = aggregatedValueForType;
-				} else {
-					currentItem.op_m_m10 = 0;
-				}
-			}
-
-			frm.refresh_field("material_detail_summarized_by_month_section_b");
-		}
-
-		// Call the material function
-		calculateMaterialValues();
-
-
+		calculateMachineryValuesB(frm, cdt, cdn, "10");
+		calculateMaterialValuesB(frm, cdt, cdn, "10");
+		calculateManpowerValuesB(frm, cdt, cdn, "10");
 	},
 	m_11: function(frm, cdt, cdn) {
-		console.log("row")
-
-		// Create an object to store aggregated values for machinery type
-		var machineryAggregatedValues = {};
-
-		// Iterate through the machinery array
-		for (var i = 0; i < frm.doc.machinery.length; i++) {
-			var machineryItem = frm.doc.machinery[i];
-			var type = machineryItem.type;
-			var activityMonthQuantity = 0;
-
-			for (var j = 0; j < frm.doc.operational_plan_detail_two2.length; j++) {
-				var monthData = frm.doc.operational_plan_detail_two2[j];
-				if (monthData.activity == machineryItem.activity) { // Compare activity
-					activityMonthQuantity = monthData.m_11 || 0;
-					console.log("activity month quantity", activityMonthQuantity)
-					break;
-				}
-			}
-
-			if (machineryAggregatedValues[type]) {
-				// If type already exists in machineryAggregatedValues, add the value
-				machineryAggregatedValues[type] += activityMonthQuantity * machineryItem.uf * machineryItem.efficency * machineryItem.item_no / machineryItem.productivity;
-			} else {
-				// If type doesn't exist, assign the value
-				machineryAggregatedValues[type] = activityMonthQuantity * machineryItem.uf * machineryItem.efficency * machineryItem.item_no / machineryItem.productivity;
-			}
-		}
-		console.log("AGGRICAGE", machineryAggregatedValues)
-
-		// Iterate through the machinary_detail_summarized_by_month_section_a array
-		for (var i = 0; i < frm.doc.machinary_detail_summarized_by_month_section_b.length; i++) {
-			var currentItem = frm.doc.machinary_detail_summarized_by_month_section_b[i];
-			var type = currentItem.type;
-			var aggregatedValueForType = machineryAggregatedValues[type];
-
-			if (aggregatedValueForType) {
-				currentItem.op_e_m11 = aggregatedValueForType;
-			} else {
-				currentItem.op_e_m11 = 0; // or handle the case where there is no aggregated value for the type
-			}
-		}
-
-		frm.refresh_field("machinary_detail_summarized_by_month_section_b");
-
-
-		// Function to calculate manpower values
-		function calculateManpowerValues() {
-			var manpowerAggregatedValues = {};
-
-			// Iterate through the manpower array
-			for (var i = 0; i < frm.doc.manpower1.length; i++) {
-				var manpowerItem = frm.doc.manpower1[i];
-				console.log("manp ower item", manpowerItem)
-				var job_title = manpowerItem.job_title;
-				var activityMonthQuantity = 0;
-
-				for (var j = 0; j < frm.doc.operational_plan_detail_two2.length; j++) {
-					var monthData = frm.doc.operational_plan_detail_two2[j];
-					if (monthData.activity == manpowerItem.activity) {
-						activityMonthQuantity = monthData.m_11 || 0;
-						break;
-					}
-				}
-				console.log("monthe qunttity", activityMonthQuantity)
-
-				if (manpowerAggregatedValues[job_title]) {
-					manpowerAggregatedValues[job_title] += activityMonthQuantity * (manpowerItem.uf * manpowerItem.li_permanent * manpowerItem.mp_number) / manpowerItem.productivity;
-				} else {
-					manpowerAggregatedValues[job_title] = activityMonthQuantity * (manpowerItem.uf * manpowerItem.li_permanent * manpowerItem.mp_number) / manpowerItem.productivity;
-				}
-			}
-			console.log("manpoere aggrirgate", manpowerAggregatedValues);
-
-			for (var i = 0; i < frm.doc.manpower_detail_summarized_by_month_section_b.length; i++) {
-				var currentItem = frm.doc.manpower_detail_summarized_by_month_section_b[i];
-				var job_title = currentItem.job_title;
-				var aggregatedValueForType = manpowerAggregatedValues[job_title];
-
-				if (aggregatedValueForType) {
-					currentItem.op_mp_m11 = aggregatedValueForType;
-				} else {
-					currentItem.op_mp_m11 = 0;
-				}
-			}
-
-			frm.refresh_field("manpower_detail_summarized_by_month_section_b");
-		}
-
-		// Call the manpower function
-		calculateManpowerValues();
-
-		function calculateMaterialValues() {
-			var materialAggregatedValues = {};
-
-			// Iterate through the material1 array
-			for (var i = 0; i < frm.doc.material1.length; i++) {
-				var materialItem = frm.doc.material1[i];
-				console.log("material item", materialItem);
-				var itemName = materialItem.item1;
-				var activityMonthQuantity = 0;
-
-				for (var j = 0; j < frm.doc.operational_plan_detail_two2.length; j++) {
-					var monthData = frm.doc.operational_plan_detail_two2[j];
-					if (monthData.activity == materialItem.activity) {
-						activityMonthQuantity = monthData.m_11 || 0;
-						break;
-					}
-				}
-				console.log("month quantity", activityMonthQuantity);
-
-				if (materialAggregatedValues[itemName]) {
-					materialAggregatedValues[itemName] += activityMonthQuantity * materialItem.qty;
-				} else {
-					materialAggregatedValues[itemName] = activityMonthQuantity * materialItem.qty;
-				}
-			}
-			console.log("material aggregate", materialAggregatedValues);
-
-			for (var i = 0; i < frm.doc.material_detail_summarized_by_month_section_b.length; i++) {
-				var currentItem = frm.doc.material_detail_summarized_by_month_section_b[i];
-				console.log("cureiejireb", currentItem)
-				var itemName = currentItem.item;
-				var aggregatedValueForType = materialAggregatedValues[itemName];
-
-				if (aggregatedValueForType) {
-					currentItem.op_m_m11 = aggregatedValueForType;
-				} else {
-					currentItem.op_m_m11 = 0;
-				}
-			}
-
-			frm.refresh_field("material_detail_summarized_by_month_section_b");
-		}
-
-		// Call the material function
-		calculateMaterialValues();
-
-
+		calculateMachineryValuesB(frm, cdt, cdn, "11");
+		calculateMaterialValuesB(frm, cdt, cdn, "11");
+		calculateManpowerValuesB(frm, cdt, cdn, "11");
 	},
 	m_12: function(frm, cdt, cdn) {
-		console.log("row")
-
-		// Create an object to store aggregated values for machinery type
-		var machineryAggregatedValues = {};
-
-		// Iterate through the machinery array
-		for (var i = 0; i < frm.doc.machinery.length; i++) {
-			var machineryItem = frm.doc.machinery[i];
-			var type = machineryItem.type;
-			var activityMonthQuantity = 0;
-
-			for (var j = 0; j < frm.doc.operational_plan_detail_two2.length; j++) {
-				var monthData = frm.doc.operational_plan_detail_two2[j];
-				if (monthData.activity == machineryItem.activity) { // Compare activity
-					activityMonthQuantity = monthData.m_12 || 0;
-					console.log("activity month quantity", activityMonthQuantity)
-					break;
-				}
-			}
-
-			if (machineryAggregatedValues[type]) {
-				// If type already exists in machineryAggregatedValues, add the value
-				machineryAggregatedValues[type] += activityMonthQuantity * machineryItem.uf * machineryItem.efficency * machineryItem.item_no / machineryItem.productivity;
-			} else {
-				// If type doesn't exist, assign the value
-				machineryAggregatedValues[type] = activityMonthQuantity * machineryItem.uf * machineryItem.efficency * machineryItem.item_no / machineryItem.productivity;
-			}
-		}
-		console.log("AGGRICAGE", machineryAggregatedValues)
-
-		// Iterate through the machinary_detail_summarized_by_month_section_a array
-		for (var i = 0; i < frm.doc.machinary_detail_summarized_by_month_section_b.length; i++) {
-			var currentItem = frm.doc.machinary_detail_summarized_by_month_section_b[i];
-			var type = currentItem.type;
-			var aggregatedValueForType = machineryAggregatedValues[type];
-
-			if (aggregatedValueForType) {
-				currentItem.op_e_m12 = aggregatedValueForType;
-			} else {
-				currentItem.op_e_m12 = 0; // or handle the case where there is no aggregated value for the type
-			}
-		}
-
-		frm.refresh_field("machinary_detail_summarized_by_month_section_b");
-
-
-		// Function to calculate manpower values
-		function calculateManpowerValues() {
-			var manpowerAggregatedValues = {};
-
-			// Iterate through the manpower array
-			for (var i = 0; i < frm.doc.manpower1.length; i++) {
-				var manpowerItem = frm.doc.manpower1[i];
-				console.log("manp ower item", manpowerItem)
-				var job_title = manpowerItem.job_title;
-				var activityMonthQuantity = 0;
-
-				for (var j = 0; j < frm.doc.operational_plan_detail_two2.length; j++) {
-					var monthData = frm.doc.operational_plan_detail_two2[j];
-					if (monthData.activity == manpowerItem.activity) {
-						activityMonthQuantity = monthData.m_12 || 0;
-						break;
-					}
-				}
-				console.log("monthe qunttity", activityMonthQuantity)
-
-				if (manpowerAggregatedValues[job_title]) {
-					manpowerAggregatedValues[job_title] += activityMonthQuantity * (manpowerItem.uf * manpowerItem.li_permanent * manpowerItem.mp_number) / manpowerItem.productivity;
-				} else {
-					manpowerAggregatedValues[job_title] = activityMonthQuantity * (manpowerItem.uf * manpowerItem.li_permanent * manpowerItem.mp_number) / manpowerItem.productivity;
-				}
-			}
-			console.log("manpoere aggrirgate", manpowerAggregatedValues);
-
-			for (var i = 0; i < frm.doc.manpower_detail_summarized_by_month_section_b.length; i++) {
-				var currentItem = frm.doc.manpower_detail_summarized_by_month_section_b[i];
-				var job_title = currentItem.job_title;
-				var aggregatedValueForType = manpowerAggregatedValues[job_title];
-
-				if (aggregatedValueForType) {
-					currentItem.op_mp_m12 = aggregatedValueForType;
-				} else {
-					currentItem.op_mp_m12 = 0;
-				}
-			}
-
-			frm.refresh_field("manpower_detail_summarized_by_month_section_b");
-		}
-
-		// Call the manpower function
-		calculateManpowerValues();
-
-		function calculateMaterialValues() {
-			var materialAggregatedValues = {};
-
-			// Iterate through the material1 array
-			for (var i = 0; i < frm.doc.material1.length; i++) {
-				var materialItem = frm.doc.material1[i];
-				console.log("material item", materialItem);
-				var itemName = materialItem.item1;
-				var activityMonthQuantity = 0;
-
-				for (var j = 0; j < frm.doc.operational_plan_detail_two2.length; j++) {
-					var monthData = frm.doc.operational_plan_detail_two2[j];
-					if (monthData.activity == materialItem.activity) {
-						activityMonthQuantity = monthData.m_12 || 0;
-						break;
-					}
-				}
-				console.log("month quantity", activityMonthQuantity);
-
-				if (materialAggregatedValues[itemName]) {
-					materialAggregatedValues[itemName] += activityMonthQuantity * materialItem.qty;
-				} else {
-					materialAggregatedValues[itemName] = activityMonthQuantity * materialItem.qty;
-				}
-			}
-			console.log("material aggregate", materialAggregatedValues);
-
-			for (var i = 0; i < frm.doc.material_detail_summarized_by_month_section_b.length; i++) {
-				var currentItem = frm.doc.material_detail_summarized_by_month_section_b[i];
-				console.log("cureiejireb", currentItem)
-				var itemName = currentItem.item;
-				var aggregatedValueForType = materialAggregatedValues[itemName];
-
-				if (aggregatedValueForType) {
-					currentItem.op_m_m12 = aggregatedValueForType;
-				} else {
-					currentItem.op_m_m12 = 0;
-				}
-			}
-
-			frm.refresh_field("material_detail_summarized_by_month_section_b");
-		}
-
-		// Call the material function
-		calculateMaterialValues();
-
-
+		calculateMachineryValuesB(frm, cdt, cdn, "12");
+		calculateMaterialValuesB(frm, cdt, cdn, "12");
+		calculateManpowerValuesB(frm, cdt, cdn, "12");
 	},
 });
 
@@ -1829,34 +610,34 @@ frappe.ui.form.on('Operational Plan', {
 			}
 			//calculating th months
 			var start_month = start_date.getMonth() + 1; // Months are 0-indexed, so we add 1
-            var end_month = end_date.getMonth() + 1;
-            var month_numbers = [];
+			var end_month = end_date.getMonth() + 1;
+			var month_numbers = [];
 
 			if (end_date.getFullYear() > start_date.getFullYear()) {
-                for (var i = start_month; i <= 12; i++) {
-                    month_numbers.push(i);
-                }
-                for (var i = 1; i <= end_month; i++) {
-                    month_numbers.push(i);
-                }
-            } else {
-                for (var i = start_month; i <= end_month; i++) {
-                    month_numbers.push(i);
-                }
-            }
+				for (var i = start_month; i <= 12; i++) {
+					month_numbers.push(i);
+				}
+				for (var i = 1; i <= end_month; i++) {
+					month_numbers.push(i);
+				}
+			} else {
+				for (var i = start_month; i <= end_month; i++) {
+					month_numbers.push(i);
+				}
+			}
 
 			// Add the month numbers to the table
-            var table = frm.doc.month_numbers;
-            frm.doc.month_numbers = []; // Clear existing entries
-            $.each(month_numbers, function(i, month_number) {
-                var row = frappe.model.add_child(frm.doc, 'Operational Plan Month Numbers', 'month_numbers');
-                row.month = month_number;
-            });
+			var table = frm.doc.month_numbers;
+			frm.doc.month_numbers = []; // Clear existing entries
+			$.each(month_numbers, function(i, month_number) {
+				var row = frappe.model.add_child(frm.doc, 'Operational Plan Month Numbers', 'month_numbers');
+				row.month = month_number;
+			});
 
-            frm.refresh_field("month_numbers");
+			frm.refresh_field("month_numbers");
 		}
 	},
-	
+
 	start_date: function(frm) {
 		if (frm.doc.start_date && frm.doc.end_date) {
 			var start_date = frappe.datetime.str_to_obj(frm.doc.start_date);
@@ -1883,40 +664,71 @@ frappe.ui.form.on('Operational Plan', {
 			}
 			//calculating th months
 			var start_month = start_date.getMonth() + 1; // Months are 0-indexed, so we add 1
-            var end_month = end_date.getMonth() + 1;
-            var month_numbers = [];
+			var end_month = end_date.getMonth() + 1;
+			var month_numbers = [];
 
 			if (end_date.getFullYear() > start_date.getFullYear()) {
-                for (var i = start_month; i <= 12; i++) {
-                    month_numbers.push(i);
-                }
-                for (var i = 1; i <= end_month; i++) {
-                    month_numbers.push(i);
-                }
-            } else {
-                for (var i = start_month; i <= end_month; i++) {
-                    month_numbers.push(i);
-                }
-            }
+				for (var i = start_month; i <= 12; i++) {
+					month_numbers.push(i);
+				}
+				for (var i = 1; i <= end_month; i++) {
+					month_numbers.push(i);
+				}
+			} else {
+				for (var i = start_month; i <= end_month; i++) {
+					month_numbers.push(i);
+				}
+			}
 
 			// Add the month numbers to the table
-            var table = frm.doc.month_numbers;
-            frm.doc.month_numbers = []; // Clear existing entries
-            $.each(month_numbers, function(i, month_number) {
-                var row = frappe.model.add_child(frm.doc, 'Operational Plan Month Numbers', 'month_numbers');
-                row.month = month_number;
-            });
+			var table = frm.doc.month_numbers;
+			frm.doc.month_numbers = []; // Clear existing entries
+			$.each(month_numbers, function(i, month_number) {
+				var row = frappe.model.add_child(frm.doc, 'Operational Plan Month Numbers', 'month_numbers');
+				row.month = month_number;
+			});
 
-            frm.refresh_field("month_numbers");
+			frm.refresh_field("month_numbers");
 		}
 	}
 });
+
+frappe.ui.form.on('Operational Plan', {
+	onload: function(frm){
+		var start_date = frappe.datetime.str_to_obj(frm.doc.start_date);
+		var end_date = frappe.datetime.str_to_obj(frm.doc.end_date);
+
+		var time_difference = end_date.getTime() - start_date.getTime();
+		var day_difference = Math.floor(time_difference / (1000 * 60 * 60 * 24)); // Calculate days
+		if(frm.doc.duration){
+			if (day_difference < 180) {
+				frm.set_df_property("operational_plan_detail_two2", "hidden", 1);
+				frm.set_df_property("manpower_detail_summarized_by_month_section_b", "hidden", 1);
+				frm.set_df_property("machinary_detail_summarized_by_month_section_b", "hidden", 1);
+				frm.set_df_property("material_detail_summarized_by_month_section_b", "hidden", 1);
+
+			}
+			else {
+				frm.set_df_property("operational_plan_detail_two2", "hidden", 0);
+				frm.set_df_property("manpower_detail_summarized_by_month_section_b", "hidden", 0);
+				frm.set_df_property("machinary_detail_summarized_by_month_section_b", "hidden", 0);
+				frm.set_df_property("material_detail_summarized_by_month_section_b", "hidden", 0);
+			}
+		}
+	}
+})
 
 
 
 //fetching the task for all other tables
 frappe.ui.form.on('Operational Plan Detail', {
 	activity: function(frm, cdt, cdn) {
+		if (!frm.doc.project) {
+			show_alert("Please select project first to effectively continue.");
+			cur_frm.clear_table("task_list");
+			cur_frm.refresh_fields("task_list");
+			return;
+		}
 		var row = locals[cdt][cdn];
 		var eqTable = frappe.model.add_child(frm.doc, "Operational Plan Machinery Detail", "machinery");
 		eqTable.activity = frm.doc.task_list[0].activity;
@@ -2230,6 +1042,21 @@ frappe.ui.form.on("Operational Plan", {
 	}
 });
 
+frappe.ui.form.on("Operational Plan", {
+	onload: function(frm, cdt, cdn) {
+		if (frm.doc.project) {
+			var d = locals[cdt][cdn];
+			frm.set_query("activity", "task_list", function() {
+				return {
+					"filters": {
+						"project": frm.doc.project
+					}
+				}
+			});
+		}
+	}
+});
+
 
 
 function AutoPopulate(frm, cdt, cdn) {
@@ -2257,7 +1084,7 @@ function AutoPopulate(frm, cdt, cdn) {
 					frappe.model.set_value(d.doctype, d.name, "remaining_planned_qty", remaining_planned_qty);
 					frappe.model.set_value(d.doctype, d.name, "amount", amount);
 					frappe.model.set_value(d.doctype, d.name, "actual_quantity", quantity);
-					frappe.model.set_value(d.doctype, d.name, "to_date_executed", 0);								
+					frappe.model.set_value(d.doctype, d.name, "to_date_executed", 0);
 
 
 				}
@@ -2412,6 +1239,8 @@ function AutoPopulate(frm, cdt, cdn) {
 						if (!machinery_exist1) {
 							var newEntrySummerized_section_a = frm.add_child("machinary_detail_summarized_by_month_section_a");
 							newEntrySummerized_section_a.id_mac = e.id_mac;
+							newEntrySummerized_section_a.activity = e.parent;
+
 							newEntrySummerized_section_a.type = e.type;
 						}
 
@@ -2419,6 +1248,8 @@ function AutoPopulate(frm, cdt, cdn) {
 						if (!machinery_exist2) {
 							var newEntrySummerized_section_b = frm.add_child("machinary_detail_summarized_by_month_section_b");
 							newEntrySummerized_section_b.id_mac = e.id_mac;
+							newEntrySummerized_section_b.activity = e.parent;
+
 							newEntrySummerized_section_b.type = e.type;
 						}
 					}
@@ -2518,12 +1349,16 @@ function AutoPopulate(frm, cdt, cdn) {
 						if (!manpower_exist1) {
 							var newEntrySummerized_section_a = frm.add_child("manpower_detail_summarized_by_month_section_a");
 							newEntrySummerized_section_a.id_map = e.id_map;
+							newEntrySummerized_section_a.activity = e.parent;
+
 							newEntrySummerized_section_a.job_title = e.job_title;
 						}
 
 						if (!manpower_exist2) {
 							var newEntrySummerized_section_b = frm.add_child("manpower_detail_summarized_by_month_section_b");
 							newEntrySummerized_section_b.id_map = e.id_map;
+							newEntrySummerized_section_b.activity = e.parent;
+
 							newEntrySummerized_section_b.job_title = e.job_title;
 						}
 
@@ -2571,12 +1406,16 @@ function AutoPopulate(frm, cdt, cdn) {
 							if (!manpower_exist1) {
 								var newEntrySummerized_section_a = frm.add_child("manpower_detail_summarized_by_month_section_a");
 								newEntrySummerized_section_a.id_map = e.id_map;
+								newEntrySummerized_section_a.activity = e.parent;
+
 								newEntrySummerized_section_a.job_title = e.job_title;
 							}
 
 							if (!manpower_exist2) {
 								var newEntrySummerized_section_b = frm.add_child("manpower_detail_summarized_by_month_section_b");
 								newEntrySummerized_section_b.id_map = e.id_map;
+								newEntrySummerized_section_b.activity = e.parent;
+
 								newEntrySummerized_section_b.job_title = e.job_title;
 							}
 						} else {
@@ -2703,12 +1542,14 @@ function AutoPopulate(frm, cdt, cdn) {
 						if (!material_exist1) {
 							var newEntrySummerized_section_a = frm.add_child("material_detail_summarized_by_month_section_a");
 							newEntrySummerized_section_a.id_mat = e.id_mat;
+							newEntrySummerized_section_a.unit = e.uom;
 							newEntrySummerized_section_a.item = e.item1;
 						}
 
 						if (!material_exist2) {
 							var newEntrySummerized_section_b = frm.add_child("material_detail_summarized_by_month_section_b");
 							newEntrySummerized_section_b.id_mat = e.id_mat;
+							newEntrySummerized_section_b.unit = e.uom;
 							newEntrySummerized_section_b.item = e.item1;
 						}
 					} else {
@@ -2744,12 +1585,14 @@ function AutoPopulate(frm, cdt, cdn) {
 							if (!material_exist1) {
 								var newEntrySummerized_section_a = frm.add_child("material_detail_summarized_by_month_section_a");
 								newEntrySummerized_section_a.id_mat = e.id_mat;
+								newEntrySummerized_section_a.unit = e.uom;
 								newEntrySummerized_section_a.item = e.item1;
 							}
 
 							if (!material_exist2) {
 								var newEntrySummerized_section_b = frm.add_child("material_detail_summarized_by_month_section_b");
 								newEntrySummerized_section_b.id_mat = e.id_mat;
+								newEntrySummerized_section_b.unit = e.uom;
 								newEntrySummerized_section_b.item = e.item1;
 							}
 						} else {
@@ -2798,7 +1641,7 @@ function AutoPopulate(frm, cdt, cdn) {
 					$.each(frm.doc.operational_plan_detail_one1, function(index, row) {
 						if (row.activity === e[0]) {
 							activity_exists1 = true;
-							if (eMain.planned ) {
+							if (eMain.planned) {
 								row.planned = eMain.planned;
 							}
 							return false;

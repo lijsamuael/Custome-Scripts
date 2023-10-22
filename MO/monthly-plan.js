@@ -3,7 +3,15 @@ cur_frm.add_fetch('project', 'consultant', 'consultant');
 cur_frm.add_fetch('project', 'client', 'client');
 
 
-
+frappe.ui.form.on("Monthly Plan", {
+	 operational_plan: function(frm, cdt, cdn) {
+		if(!frm.doc.month){
+			frm.doc.operational_plan = null;
+			frm.refresh_field("operational_plan")
+			frappe.show_alert("Please Select Month First")
+		}
+	 }
+ });
 
 frappe.ui.form.on("Monthly Plan", {
 	quantity: function(frm, cdt, cdn) {
@@ -565,7 +573,7 @@ function mainFunction(frm, cdt, cdn) {
 									var equip_exist = false;
 
 									frm.doc.monthly_plan_material_detail_week.map((row, index) => {
-										if (row.item1 == val.item1) {
+										if (row.material_name == val.item1) {
 											equip_exist = true;
 										}
 									})
