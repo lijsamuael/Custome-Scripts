@@ -4,14 +4,21 @@ cur_frm.add_fetch('project', 'client', 'client');
 
 
 frappe.ui.form.on("Monthly Plan", {
-	 operational_plan: function(frm, cdt, cdn) {
-		if(!frm.doc.month){
+	operational_plan: function(frm, cdt, cdn) {
+		if (!frm.doc.month) {
 			frm.doc.operational_plan = null;
 			frm.refresh_field("operational_plan")
 			frappe.show_alert("Please Select Month First")
 		}
-	 }
- });
+	}
+});
+
+// frappe.ui.form.on("Monthly Plan Detail", {
+// 	 planned_this_month: function(frm, cdt, cdn) {
+// 		var row = locals[cdt][cdn];
+// 		 row.remaining = row.planned_this_month - row.actual_this_month;
+// 	 }
+//  });
 
 frappe.ui.form.on("Monthly Plan", {
 	quantity: function(frm, cdt, cdn) {
@@ -57,6 +64,43 @@ frappe.ui.form.on("Monthly Plan", {
 	}
 
 });
+
+
+frappe.ui.form.on('Monthly Plan Detail Week View', {
+	w_1: function(frm, cdt, cdn){
+		prohobitUpperSum1(frm, cdt, cdn, "w_1")
+	},
+	w_2: function(frm, cdt, cdn){
+		prohobitUpperSum1(frm, cdt, cdn, "w_2")
+	},
+	w_3: function(frm, cdt, cdn){
+		prohobitUpperSum1(frm, cdt, cdn, "w_3")
+	},
+	w_4: function(frm, cdt, cdn){
+		prohobitUpperSum1(frm, cdt, cdn, "w_4")
+	}
+})
+
+
+function prohobitUpperSum1(frm, cdt, cdn, month) {
+	var total = 0;
+	var row = locals[cdt][cdn];
+	console.log("localssss for each month", row);
+
+	// Calculate the total
+	total += row.w_1 ? parseFloat(row.w_1) : 0;
+	total += row.w_2 ? parseFloat(row.w_2) : 0;
+	total += row.w_3 ? parseFloat(row.w_3) : 0;
+	total += row.w_4 ? parseFloat(row.w_4) : 0;
+
+	console.log("total sum", total);
+
+	if(total > row.planned_this_month){
+		row[month] = null;
+		frm.refresh_field("monthly_plan_detail_week_view")
+		frappe.show_alert("Each week sum should be lower than the planned")
+	}
+}
 
 
 
@@ -108,6 +152,8 @@ function assignMachineryWeek(frm, cdt, cdn, w) {
 	frm.doc.monthly_plan_machinery_detail_week.map((item, idx) => {
 		if (machineryAggrigate[item.machinery_type]) {
 			item[w] = machineryAggrigate[item.machinery_type];
+		} else {
+			item[w] = 0;
 		}
 	})
 
@@ -145,6 +191,8 @@ function assignManpowerWeek(frm, cdt, cdn, w) {
 	frm.doc.monthly_plan_manpower_detail_week.map((item, idx) => {
 		if (manpowerAggrigate[item.labor_type]) {
 			item[w] = manpowerAggrigate[item.labor_type];
+		} else {
+			item[w] = 0;
 		}
 	})
 
@@ -178,6 +226,8 @@ function assignMaterialWeek(frm, cdt, cdn, w) {
 	frm.doc.monthly_plan_material_detail_week.map((item, idx) => {
 		if (materialAggrigate[item.material_name]) {
 			item[w] = materialAggrigate[item.material_name];
+		} else {
+			item[w] = 0;
 		}
 	})
 

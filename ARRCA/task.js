@@ -15,7 +15,7 @@ frappe.ui.form.on("Task", {
 	},
 	productivity: function(frm){
 		if(frm.doc.quantity && frm.doc.productivity){
-			var duration = (frm.doc.quantity  ) / (frm.doc.productivity || 1);
+			var duration = ((frm.doc.quantity  ) / (frm.doc.productivity || 1)) / 24;
 			frm.set_value("duration", duration);
 			frm.refresh_field("duration")
 			frm.set_value("expected_time", duration * 24);

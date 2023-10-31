@@ -17,15 +17,12 @@ frappe.ui.form.on('Operational Plan', {
 //about the critical path calculation
 function findMaxDate(dateArray) {
 	console.log("date arrya", dateArray)
-	if (dateArray.length == 0) {
-		return null;
-	}
 	const timestamps = dateArray.map(date => new Date(date).getTime());
 	const maxTimestamp = Math.max(...timestamps)
 	return maxTimestamp && new Date(maxTimestamp).toISOString().split('T')[0];
 }
 function findMinDate(dateArray) {
-	console.log("date array", dateArray)
+	console.log("date arrya", dateArray)
 	const timestamps = dateArray.map(date => new Date(date).getTime());
 	const minTimestamp = Math.min(...timestamps);
 
@@ -37,7 +34,7 @@ frappe.ui.form.on('Activity Sequencing', {
 	activity: function(frm, cdt, cdn) {
 		var row = locals[cdt][cdn];
 		console.log("row", row)
-		if (row.idx == 1) {
+		if(row.idx == 1){
 			frappe.call({
 				method: 'frappe.client.get_list',
 				args: {
@@ -70,115 +67,115 @@ frappe.ui.form.on('Operational Plan', {
 		let nodes = {}
 
 
-		if (dependency && frm.doc.start_date_of_first_task) {
-			dependency.forEach(task => {
+		if(dependency && frm.doc.start_date_of_first_task){
+			  dependency.forEach(task => {
 				if (!nodes[task.activity]) {
 
-					if (!task.predecessor_activity) {
-						nodes[task.activity] = { es: [frm.doc.start_date_of_first_task], ef: [frappe.datetime.add_days(frm.doc.start_date_of_first_task, task.duration)] };
-						console.log("nodes first", nodes)
-					}
+				  if (!task.predecessor_activity) {
+					nodes[task.activity] = { es: [frm.doc.start_date_of_first_task], ef: [ frappe.datetime.add_days(frm.doc.start_date_of_first_task, task.duration)] };
+					console.log("nodes first", nodes)
+				  }
 
-					else {
-						nodes[task.activity] = { es: [], ef: [] };
-						console.log("nodes final", nodes)
+				  else {
+					nodes[task.activity] = { es: [], ef: [] };
+					console.log("nodes final", nodes)
 
-						if (task.relationship_type == "Finish to Start") {
-							let predecessorEf = nodes[task.predecessor_activity]["ef"].length - 1;
-							nodes[task.activity]["es"].push(frappe.datetime.add_days(nodes[task.predecessor_activity]["ef"][predecessorEf], (task.lag_days - task.lead_days)));
-							nodes[task.activity]["ef"].push(frappe.datetime.add_days(nodes[task.activity]["es"][nodes[task.activity]["es"].length - 1], task.duration));
-						}
-						else if (task.relationship_type == "Start to Finish") {
-							let predecessorEs = nodes[task.predecessor_activity]["es"].length - 1;
-							nodes[task.activity]["ef"].push(frappe.datetime.add_days(nodes[task.predecessor_activity]["es"][predecessorEs], (task.lag_days - task.lead_days)));
-							// nodes[task.activity]["es"].push(nodes[task.activity]["ef"][nodes[task.activity]["ef"].length - 1] - task.duration);
-						}
-						else if (task.relationship_type == "Start to Start") {
-							let predecessorEs = nodes[task.predecessor_activity]["es"].length - 1;
-							nodes[task.activity]["es"].push(frappe.datetime.add_days(nodes[task.predecessor_activity]["es"][predecessorEs], (task.lag_days - task.lead_days)));
-							nodes[task.activity]["ef"].push(frappe.datetime.add_days(nodes[task.activity]["es"][nodes[task.activity]["es"].length - 1], task.duration));
-						}
-						else if (task.relationship_type == "Finish to Finish") {
-							let predecessorEf = nodes[task.predecessor_activity]["ef"].length - 1;
-							nodes[task.activity]["ef"].push(frappe.datetime.add_days(nodes[task.predecessor_activity]["ef"][predecessorEf], (task.lag_days - task.lead_days)));
-							// nodes[task.activity]["es"].push(nodes[task.activity]["ef"][nodes[task.activity]["ef"].length - 1] - task.duration);
-						}
+					if (task.relationship_type== "Finish to Start") {
+					  let predecessorEf = nodes[task.predecessor_activity]["ef"].length - 1;
+					  nodes[task.activity]["es"].push(frappe.datetime.add_days(nodes[task.predecessor_activity]["ef"][predecessorEf],  (task.lag_days - task.lead_days) ));
+					  nodes[task.activity]["ef"].push(frappe.datetime.add_days(nodes[task.activity]["es"][nodes[task.activity]["es"].length - 1],  task.duration));
 					}
+					else if (task.relationship_type== "Start to Finish") {
+					  let predecessorEs = nodes[task.predecessor_activity]["es"].length - 1;
+					  nodes[task.activity]["ef"].push(frappe.datetime.add_days(nodes[task.predecessor_activity]["es"][predecessorEs], (task.lag_days - task.lead_days)));
+					  // nodes[task.activity]["es"].push(nodes[task.activity]["ef"][nodes[task.activity]["ef"].length - 1] - task.duration);
+					}
+					else if (task.relationship_type== "Start to Start") {
+					  let predecessorEs = nodes[task.predecessor_activity]["es"].length - 1;
+					  nodes[task.activity]["es"].push(frappe.datetime.add_days(nodes[task.predecessor_activity]["es"][predecessorEs] , (task.lag_days - task.lead_days)));
+					  nodes[task.activity]["ef"].push(frappe.datetime.add_days(nodes[task.activity]["es"][nodes[task.activity]["es"].length - 1] , task.duration));
+					}
+					else if (task.relationship_type== "Finish to Finish") {
+					  let predecessorEf = nodes[task.predecessor_activity]["ef"].length - 1;
+					  nodes[task.activity]["ef"].push(frappe.datetime.add_days(nodes[task.predecessor_activity]["ef"][predecessorEf], (task.lag_days - task.lead_days)));
+					  // nodes[task.activity]["es"].push(nodes[task.activity]["ef"][nodes[task.activity]["ef"].length - 1] - task.duration);
+					}
+				  }
 				}
 
 				else {
 
-					if (task.relationship_type == "Finish to Start") {
-						let predecessorEf = nodes[task.predecessor_activity]["ef"].length - 1;
-						nodes[task.activity]["es"].push(frappe.datetime.add_days(nodes[task.predecessor_activity]["ef"][predecessorEf], (task.lag_days - task.lead_days)));
-						nodes[task.activity]["ef"].push(frappe.datetime.add_days(nodes[task.activity]["es"][nodes[task.activity]["es"].length - 1], task.duration));
+					if (task.relationship_type== "Finish to Start") {
+					  let predecessorEf = nodes[task.predecessor_activity]["ef"].length - 1;
+					  nodes[task.activity]["es"].push(frappe.datetime.add_days(nodes[task.predecessor_activity]["ef"][predecessorEf],  (task.lag_days - task.lead_days) ));
+					  nodes[task.activity]["ef"].push(frappe.datetime.add_days(nodes[task.activity]["es"][nodes[task.activity]["es"].length - 1],  task.duration));
 					}
-					else if (task.relationship_type == "Start to Finish") {
-						let predecessorEs = nodes[task.predecessor_activity]["es"].length - 1;
-						nodes[task.activity]["ef"].push(frappe.datetime.add_days(nodes[task.predecessor_activity]["es"][predecessorEs], (task.lag_days - task.lead_days)));
-						// nodes[task.activity]["es"].push(nodes[task.activity]["ef"][nodes[task.activity]["ef"].length - 1]);
+					else if (task.relationship_type== "Start to Finish") {
+					  let predecessorEs = nodes[task.predecessor_activity]["es"].length - 1;
+					  nodes[task.activity]["ef"].push(frappe.datetime.add_days(nodes[task.predecessor_activity]["es"][predecessorEs], (task.lag_days - task.lead_days)));
+					  // nodes[task.activity]["es"].push(nodes[task.activity]["ef"][nodes[task.activity]["ef"].length - 1] - task.duration);
 					}
-					else if (task.relationship_type == "Start to Start") {
-						let predecessorEs = nodes[task.predecessor_activity]["es"].length - 1;
-						nodes[task.activity]["es"].push(frappe.datetime.add_days(nodes[task.predecessor_activity]["es"][predecessorEs], (task.lag_days - task.lead_days)));
-						nodes[task.activity]["ef"].push(frappe.datetime.add_days(nodes[task.activity]["es"][nodes[task.activity]["es"].length - 1], task.duration));
+					else if (task.relationship_type== "Start to Start") {
+					  let predecessorEs = nodes[task.predecessor_activity]["es"].length - 1;
+					  nodes[task.activity]["es"].push(frappe.datetime.add_days(nodes[task.predecessor_activity]["es"][predecessorEs] , (task.lag_days - task.lead_days)));
+					  nodes[task.activity]["ef"].push(frappe.datetime.add_days(nodes[task.activity]["es"][nodes[task.activity]["es"].length - 1] , task.duration));
 					}
-					else if (task.relationship_type == "Finish to Finish") {
-						let predecessorEf = nodes[task.predecessor_activity]["ef"].length - 1;
-						nodes[task.activity]["ef"].push(frappe.datetime.add_days(nodes[task.predecessor_activity]["ef"][predecessorEf], (task.lag_days - task.lead_days)));
-						// nodes[task.activity]["es"].push(nodes[task.activity]["ef"][nodes[task.activity]["ef"].length - 1] );
-					}
-				}
-			});
-
-
-
-
-			for (let i = dependency.length - 1; i >= 0; i--) {
-
-				let task = dependency[i];
-
-
-				if (i == dependency.length - 1) {
-					console.log("task", nodes[task.activity].ef)
-					console.log("max value", findMaxDate(nodes[task.activity].ef))
-					nodes[task.activity].lf = [findMaxDate(nodes[task.activity].ef)];
-					nodes[task.activity].ls = [frappe.datetime.add_days(nodes[task.activity].lf, - task.duration)];
-				}
-
-				if (task.predecessor_activity) {
-					if (!nodes[task.predecessor_activity].lf) {
-						nodes[task.predecessor_activity].lf = [];
-					}
-					if (!nodes[task.predecessor_activity].ls) {
-						nodes[task.predecessor_activity].ls = [];
-					}
-
-
-					if (task.relationship_type == "Finish to Start") {
-						let value = nodes[task.activity]["ls"].length - 1;
-						nodes[task.predecessor_activity]["lf"].push(frappe.datetime.add_days(nodes[task.activity]["ls"][value], - (task.lag_days + task.lead_days)));
-						let duration = dependency.find((item) => item.activity == task.predecessor_activity).duration;
-						nodes[task.predecessor_activity]["ls"].push(frappe.datetime.add_days(nodes[task.predecessor_activity]["lf"][nodes[task.predecessor_activity]["lf"].length - 1], - duration));
-					}
-
-					else if (task.relationship_type == "Start to Finish") {
-						nodes[task.predecessor_activity]["ls"].push(frappe.datetime.add_days(nodes[task.activity]["lf"][nodes[task.predecessor_activity]["lf"].length - 1], - (task.lag_days + task.lead_days)));
-					}
-
-					else if (task.relationship_type == "Start to Start") {
-						nodes[task.predecessor_activity]["ls"].push(frappe.datetime.add_days(nodes[task.activity]["ls"][nodes[task.predecessor_activity]["ls"].length - 1], - (task.lag_days + task.lead_days)));
-					}
-
-					else if (task.relationship_type == "Finish to Finish") {
-						let value = nodes[task.activity]["lf"].length - 1;
-						nodes[task.predecessor_activity]["lf"].push(frappe.datetime.add_days(nodes[task.activity]["lf"][value], - (task.lag_days + task.lead_days)));
-						let duration = dependency.find((item) => item.activity == task.predecessor_activity).duration;
-						nodes[task.predecessor_activity]["ls"].push(frappe.datetime.add_days(nodes[task.predecessor_activity]["lf"][nodes[task.predecessor_activity]["lf"].length - 1], - duration));
+					else if (task.relationship_type== "Finish to Finish") {
+					  let predecessorEf = nodes[task.predecessor_activity]["ef"].length - 1;
+					  nodes[task.activity]["ef"].push(frappe.datetime.add_days(nodes[task.predecessor_activity]["ef"][predecessorEf], (task.lag_days - task.lead_days)));
+					  // nodes[task.activity]["es"].push(nodes[task.activity]["ef"][nodes[task.activity]["ef"].length - 1] - task.duration);
 					}
 				}
+			  });
 
-			}
+
+
+
+			 for (let i = dependency.length - 1; i >= 0; i--) {
+
+				  let task = dependency[i];
+
+
+					 if( i == dependency.length -1){
+						 console.log("task", nodes[task.activity].ef)
+						 console.log("max value", findMaxDate(nodes[task.activity].ef))
+						 nodes[task.activity].lf = [findMaxDate(nodes[task.activity].ef)];
+						 nodes[task.activity].ls = [frappe.datetime.add_days(nodes[task.activity].lf, - task.duration)];
+					 }
+
+					if(task.predecessor_activity){
+							 if(!nodes[task.predecessor_activity].lf){
+								 nodes[task.predecessor_activity].lf = [];
+							 }
+						 if(!nodes[task.predecessor_activity].ls){
+							 nodes[task.predecessor_activity].ls = [];
+						 }
+
+
+						   if (task.relationship_type== "Finish to Start") {
+							 let value = nodes[task.activity]["ls"].length -1;
+							 nodes[task.predecessor_activity]["lf"].push(frappe.datetime.add_days(nodes[task.activity]["ls"][value], - (task.lag_days + task.lead_days)));
+							 let duration = dependency.find((item) => item.activity == task.predecessor_activity).duration;
+							 nodes[task.predecessor_activity]["ls"].push(frappe.datetime.add_days(nodes[task.predecessor_activity]["lf"][nodes[task.predecessor_activity]["lf"].length - 1], - duration));
+						   }
+
+						   else if (task.relationship_type== "Start to Finish") {
+							 nodes[task.predecessor_activity]["ls"].push(frappe.datetime.add_days(nodes[task.activity]["lf"][nodes[task.predecessor_activity]["lf"].length - 1], - (task.lag_days + task.lead_days)));
+						   }
+
+						   else if (task.relationship_type== "Start to Start") {
+							 nodes[task.predecessor_activity]["ls"].push(frappe.datetime.add_days(nodes[task.activity]["ls"][nodes[task.predecessor_activity]["ls"].length - 1], - (task.lag_days + task.lead_days)));
+						   }
+
+						   else if (task.relationship_type== "Finish to Finish") {
+							   let value = nodes[task.activity]["lf"].length -1;
+							   nodes[task.predecessor_activity]["lf"].push(frappe.datetime.add_days(nodes[task.activity]["lf"][value], - (task.lag_days + task.lead_days)));
+							   let duration = dependency.find((item) => item.activity == task.predecessor_activity).duration;
+							   nodes[task.predecessor_activity]["ls"].push(frappe.datetime.add_days(nodes[task.predecessor_activity]["lf"][nodes[task.predecessor_activity]["lf"].length - 1], - duration));
+						   }
+					}
+
+			  }
 
 
 			const nodesArray = Object.entries(nodes).map(([key, value]) => ({ [key]: value }));
@@ -187,52 +184,25 @@ frappe.ui.form.on('Operational Plan', {
 
 			const processedNodesArray = nodesArray.map(obj => {
 				const [key, value] = Object.entries(obj)[0];
-				const es = findMaxDate(value.es);
+				const es = value.ef.length > 0 ? findMaxDate(value.es): null;
 				const ef = findMaxDate(value.ef);
 
 				const lf = findMinDate(value.lf);
 				const ls = findMinDate(value.ls);
-				const ss = frappe.datetime.get_diff(ls, es);
-				const ff = frappe.datetime.get_diff(lf, ef);
+				const ss = ls - es;
+				const ff = lf - ef;
 
 				return { [key]: { es, ef, lf, ls, ss, ff } };
 			});
 
 			console.log(processedNodesArray);
-			var firstKey = Object.keys(processedNodesArray[0])[0];
-			var lastKey = Object.keys(processedNodesArray[processedNodesArray.length - 1])[0];
-
-			var totalDuration = frappe.datetime.get_diff(processedNodesArray[processedNodesArray.length - 1][lastKey].ef, processedNodesArray[0][firstKey].es);
-
-			console.log("1, ", firstKey)
-			console.log("2, ", lastKey)
-			console.log("duration", totalDuration)
-
-			frm.set_value('critical_path_duration_in_days', totalDuration)
-			frm.refresh_field('critical_path_duration_in_days')
-
 
 			const nodesWithSSZero = processedNodesArray.filter(obj => Object.values(obj)[0].ss === 0);
 			const nodeNamesWithSSZero = nodesWithSSZero.map(obj => Object.keys(obj)[0]);
-			const tasksString = nodeNamesWithSSZero.join(" - ");
-			frm.set_value("tasks_on_the_critical_path", tasksString);
-			frm.refresh_field("tasks_on_the_critical_path");
 
 			console.log(nodeNamesWithSSZero);
-			frm.doc.critical_path_table = []
-			processedNodesArray.map((item) => {
-				console.log("iteeem", item)
-				var tableRow = frm.add_child("critical_path_table")
-				tableRow.activity = Object.keys(item)[0];
-				tableRow.es = item[Object.keys(item)[0]].es;
-				tableRow.ef = item[Object.keys(item)[0]].ef;
-				tableRow.lf = item[Object.keys(item)[0]].lf;
-				tableRow.ls = item[Object.keys(item)[0]].ls;
-
-			})
-			frm.refresh_field("critical_path_table")
 		}
-		else (
+		else(
 			frappe.show_alert("please select list of activities first")
 		)
 
@@ -490,7 +460,7 @@ frappe.ui.form.on("Operational Plan", {
 
 frappe.ui.form.on("Operational Plan", {
 	onload: function(frm, cdt, cdn) {
-		if (frm.doc.project) {
+		if(frm.doc.project){
 			var d = locals[cdt][cdn];
 			frm.set_query("activity", "task_list", function() {
 				return {
@@ -623,8 +593,7 @@ function AutoPopulate(frm, cdt, cdn) {
 		//Script to populate child tables for machinary
 		var taskParent = eMain.activity;
 		var subject = eMain.activity_name;
-		var planned_qty = eMain.planned;
-		console.log("plllllllllllllllllllllllllllllllllllllllllllllllllll", eMain)
+		var planned_qty = eMain.planned ? eMain.planned : 1;
 
 
 
@@ -937,70 +906,118 @@ function AutoPopulate(frm, cdt, cdn) {
 				method: "frappe.client.get_list",
 				args: {
 					doctype: 'Material DetailARRCA',
-					filters: {
+					filters:{
 						'parent': taskParent
 					},
 					fields: ['*']
 
-				}, callback: async function(r) {
-					console.log("meeeeeeeeeeeeeeeeeesage", r.message)
-					$.each(r.message, function(_i, e) {
-						console.log("material eeeeeeeeeeeeeeeeeeeee", e)
+			}, callback: async function(r) {
+				console.log("meeeeeeeeeeeeeeeeeesage", r.message)
+				$.each(r.message, function(_i, e) {
+					console.log("material eeeeeeeeeeeeeeeeeeeee", e)
 
-						var entry = frm.add_child("material1");
-						entry.id_mat = e.id_mat;
-						entry.item1 = e.item1;
-						entry.activity = taskParent;
-						entry.subject = subject;
-						entry.uom = e.uom;
-						entry.qty = e.qaty;
+					var entry = frm.add_child("material1");
+					entry.id_mat = e.id_mat;
+					entry.item1 = e.item1;
+					entry.activity = taskParent;
+					entry.subject = subject;
+					entry.uom = e.uom;
+					entry.qty = e.qaty;
 
 
-						//fetching the quantity from the database
-						frappe.call({
-							method: 'frappe.client.get_list',
-							args: {
-								doctype: 'Task',
-								filters: {
-									'name': e.parent,
-								},
-								fields: ["quantity"],
+					//fetching the quantity from the database
+					frappe.call({
+						method: 'frappe.client.get_list',
+						args: {
+							doctype: 'Task',
+							filters: {
+								'name': e.parent,
 							},
-							callback: async function(response) {
-								console.log("Response ", response.message[0].quantity)
-								entry.task_qty = response.message[0].quantity;
-								entry.uf = e.uf;
-								entry.efficency = e.efficency;
-								entry.unit_price = e.unit_price;
-								grand_total_cost_for_material += entry.qty * entry.unit_price;
-								number_of_items_for_material += 1;
-								sum_of_unit_rate_for_material += entry.unit_price;
-								entry.total_cost = entry.qty * entry.unit_price;
-								entry.material_qty = entry.qty * entry.task_qty;
-								entry.material_no = entry.qty * entry.task_qty;
+							fields: ["quantity"],
+						},
+						callback: async function(response) {
+							console.log("Response ", response.message[0].quantity)
+							entry.task_qty = response.message[0].quantity;
+							entry.uf = e.uf;
+							entry.efficency = e.efficency;
+							entry.unit_price = e.unit_price;
+							grand_total_cost_for_material += entry.qty * entry.unit_price;
+							number_of_items_for_material += 1;
+							sum_of_unit_rate_for_material += entry.unit_price;
+							entry.total_cost = entry.qty * entry.unit_price;
+							entry.material_qty = entry.qty * entry.task_qty;
+							entry.material_no = entry.qty * entry.task_qty;
 
 
-								frm.refresh_field("material1")
+							frm.refresh_field("material1")
 
+						}
+					})
+
+					if (!frm.doc.material_detail_summarized_by_month_section_a) {
+
+						var entryMaterialSummerized = frm.add_child("material_detail_summerized");
+						entryMaterialSummerized.id_mat = e.id_mat;
+						entryMaterialSummerized.item1 = e.item1;
+						entryMaterialSummerized.uom = e.uom;
+						entryMaterialSummerized.qty = e.qty * planned_qty;
+						entryMaterialSummerized.uf = e.uf;
+						entryMaterialSummerized.efficency = e.efficency;
+						entryMaterialSummerized.unit_price = e.unit_price;
+						entryMaterialSummerized.total_cost = entryMaterialSummerized.qty * entryMaterialSummerized.unit_price;
+
+						var material_exist1 = false;
+						var material_exist2 = false;
+
+						console.log("eeeeeeeeee material", e);
+
+						$.each(frm.doc.operational_plan_detail_one, function(index, row) {
+							if (row.activity === e.parent) {
+								material_exist1 = true;
+								return false; // Exit the loop if activity is found
 							}
-						})
+						});
 
-						if (!frm.doc.material_detail_summarized_by_month_section_a) {
+						$.each(frm.doc.operational_plan_detail_one, function(index, row) {
+							if (row.activity === e.parent) {
+								material_exist2 = true;
+								return false; // Exit the loop if activity is found
+							}
+						});
 
-							var entryMaterialSummerized = frm.add_child("material_detail_summerized");
-							entryMaterialSummerized.id_mat = e.id_mat;
-							entryMaterialSummerized.item1 = e.item1;
-							entryMaterialSummerized.uom = e.uom;
-							entryMaterialSummerized.qty = e.qty * planned_qty;
-							entryMaterialSummerized.uf = e.uf;
-							entryMaterialSummerized.efficency = e.efficency;
-							entryMaterialSummerized.unit_price = e.unit_price;
-							entryMaterialSummerized.total_cost = entryMaterialSummerized.qty * entryMaterialSummerized.unit_price;
+						console.log(" material exist 1", material_exist1);
+						console.log(" material exist 2", material_exist2);
 
+
+						if (!material_exist1) {
+							var newEntrySummerized_section_a = frm.add_child("material_detail_summarized_by_month_section_a");
+							newEntrySummerized_section_a.id_mat = e.id_mat;
+							newEntrySummerized_section_a.unit = e.uom;
+							newEntrySummerized_section_a.item = e.item1;
+						}
+
+						if (!material_exist2) {
+							var newEntrySummerized_section_b = frm.add_child("material_detail_summarized_by_month_section_b");
+							newEntrySummerized_section_b.id_mat = e.id_mat;
+							newEntrySummerized_section_b.unit = e.uom;
+							newEntrySummerized_section_b.item = e.item1;
+						}
+					}
+					else {
+
+						var material_exist = false;
+
+
+						$.each(frm.doc.material_detail_summarized_by_month_section_a, function(index, row) {
+							if (row.id_mat === e.id_mat) {
+								material_exist = true;
+								return false; // Exit the loop if manpower entry is found
+							}
+						});
+
+						if (!material_exist) {
 							var material_exist1 = false;
 							var material_exist2 = false;
-
-							console.log("eeeeeeeeee material", e);
 
 							$.each(frm.doc.operational_plan_detail_one, function(index, row) {
 								if (row.activity === e.parent) {
@@ -1016,10 +1033,6 @@ function AutoPopulate(frm, cdt, cdn) {
 								}
 							});
 
-							console.log(" material exist 1", material_exist1);
-							console.log(" material exist 2", material_exist2);
-
-
 							if (!material_exist1) {
 								var newEntrySummerized_section_a = frm.add_child("material_detail_summarized_by_month_section_a");
 								newEntrySummerized_section_a.id_mat = e.id_mat;
@@ -1033,174 +1046,130 @@ function AutoPopulate(frm, cdt, cdn) {
 								newEntrySummerized_section_b.unit = e.uom;
 								newEntrySummerized_section_b.item = e.item1;
 							}
+						} else {
+							var entryMaterialSummerized = frm.add_child("material_detail_summerized");
+							entryMaterialSummerized.id_mat = e.id_mat;
+							entryMaterialSummerized.item1 = e.item1;
+							entryMaterialSummerized.uom = e.uom;
+							entryMaterialSummerized.qty = e.qty * planned_qty;
+							entryMaterialSummerized.uf = e.uf;
+							entryMaterialSummerized.efficency = e.efficency;
+							entryMaterialSummerized.unit_price = e.unit_price;
+							entryMaterialSummerized.total_cost = entryMaterialSummerized.qty * entryMaterialSummerized.unit_price;
 						}
-						else {
-
-							var material_exist = false;
-
-
-							$.each(frm.doc.material_detail_summarized_by_month_section_a, function(index, row) {
-								if (row.id_mat === e.id_mat) {
-									material_exist = true;
-									return false; // Exit the loop if manpower entry is found
-								}
-							});
-
-							if (!material_exist) {
-								var material_exist1 = false;
-								var material_exist2 = false;
-
-								$.each(frm.doc.operational_plan_detail_one, function(index, row) {
-									if (row.activity === e.parent) {
-										material_exist1 = true;
-										return false; // Exit the loop if activity is found
-									}
-								});
-
-								$.each(frm.doc.operational_plan_detail_one, function(index, row) {
-									if (row.activity === e.parent) {
-										material_exist2 = true;
-										return false; // Exit the loop if activity is found
-									}
-								});
-
-								if (!material_exist1) {
-									var newEntrySummerized_section_a = frm.add_child("material_detail_summarized_by_month_section_a");
-									newEntrySummerized_section_a.id_mat = e.id_mat;
-									newEntrySummerized_section_a.unit = e.uom;
-									newEntrySummerized_section_a.item = e.item1;
-								}
-
-								if (!material_exist2) {
-									var newEntrySummerized_section_b = frm.add_child("material_detail_summarized_by_month_section_b");
-									newEntrySummerized_section_b.id_mat = e.id_mat;
-									newEntrySummerized_section_b.unit = e.uom;
-									newEntrySummerized_section_b.item = e.item1;
-								}
-							} else {
-								var entryMaterialSummerized = frm.add_child("material_detail_summerized");
-								entryMaterialSummerized.id_mat = e.id_mat;
-								entryMaterialSummerized.item1 = e.item1;
-								entryMaterialSummerized.uom = e.uom;
-								entryMaterialSummerized.qty = e.qty * planned_qty;
-								entryMaterialSummerized.uf = e.uf;
-								entryMaterialSummerized.efficency = e.efficency;
-								entryMaterialSummerized.unit_price = e.unit_price;
-								entryMaterialSummerized.total_cost = entryMaterialSummerized.qty * entryMaterialSummerized.unit_price;
-							}
-						}
-					})
-
-					frm.doc.material_total_cost = grand_total_cost_for_material;
-					//frm.doc.man_power_unit_rate = (sum_of_unit_rate/number_of_items);
-
-					refresh_field("material1");
-					refresh_field("material_total_cost");
-					refresh_field("material_detail_summerized");
-					refresh_field("material_detail_summarized_by_month_section_a");
-					refresh_field("material_detail_summarized_by_month_section_b");
-				}
-			})
-		}
-		//Script to populate child tables for task detail by month
-		if (taskParent) {
-
-			frappe.call({
-
-				method: "erpnext.task_week_detail_populate_api.get_task_by_task_id",
-				args: { activity: taskParent }
-
-			}).done((r) => {
-				$.each(r.message, function(_i, e) {
-					console.log("abebeb beso bela ena mote ende", e)
-
-					var entryOne = frm.add_child("operational_plan_detail_one");
-					entryOne.activity = e[0];
-					entryOne.activity_name = e[17];
-					entryOne.duration = e[71];
-					entryOne.uom = e[61];
-					console.log("eee", e)
-					entryOne.productivity = e[51]
-
-
-					var value = planned_qty;
-					let remain = value;
-
-
-					var remainingPlannedFor2 = 0;
-
-					if (planned_qty) {
-
-						console.log("planned :", planned_qty, "productivity: ", entryOne.productivity, "value: ", value,)
-
-
-						const months = ['sep', 'oct', 'nov', 'dec', 'jan', 'feb'];
-						var total_planned = 0;
-
-						for (let i = 0; i < months.length; i++) {
-							const currentMonth = months[i];
-							const allowedDays = frm.doc.no[0][currentMonth] * eMain.quantity / eMain.duration;
-							remainingPlannedFor2 += frm.doc.no[0][currentMonth] * eMain.quantity / eMain.duration;
-
-							if (remain <= allowedDays) {
-								entryOne[`m_${i + 1}`] = remain;
-								total_planned += entryOne[`m_${i + 1}`];
-								console.log("remain", remain)
-								break;
-							} else {
-								entryOne[`m_${i + 1}`] = allowedDays;
-								total_planned += entryOne[`m_${i + 1}`];
-								remain -= allowedDays;
-								console.log("remain", remain)
-							}
-						}
-
-						entryOne.planned = total_planned;
-
-						frm.refresh_field("operational_plan_detail_one");
-
-					}
-
-					var entryTwo = frm.add_child("operational_plan_detail_two");
-					entryTwo.activity = e[0];
-
-					entryTwo.activity_name = e[17];
-					entryTwo.duration = e[71];
-					entryTwo.uom = e[61];
-					var totalPlannedTwo = 0;
-
-					const monthsSecond = ['mar', 'apr', 'may', 'jun', 'july', 'oct'];
-
-					console.log("remainingPlannedFor2", remainingPlannedFor2);
-
-					if (planned_qty > remainingPlannedFor2) {
-						for (let i = 0; i < monthsSecond.length; i++) {
-							const currentMonth = monthsSecond[i];
-							const allowedDays = frm.doc.no[0][currentMonth] * eMain.quantity / eMain.duration;
-
-							if (remain <= allowedDays) {
-								entryTwo[`m_${i + 7}`] = remain;
-								totalPlannedTwo += entryTwo[`m_${i + 7}`];
-								console.log("remain", remain)
-								break;
-							} else {
-								entryTwo[`m_${i + 7}`] = allowedDays;
-								totalPlannedTwo += entryTwo[`m_${i + 7}`];
-								remain -= allowedDays;
-								console.log("remain", remain)
-							}
-						}
-						entryTwo.planned = totalPlannedTwo;
-						refresh_field("operational_plan_detail_two");
-
-
 					}
 				})
 
-				refresh_field("operational_plan_detail_one");
-				refresh_field("operational_plan_detail_two");
-			})
+				frm.doc.material_total_cost = grand_total_cost_for_material;
+				//frm.doc.man_power_unit_rate = (sum_of_unit_rate/number_of_items);
+
+				refresh_field("material1");
+				refresh_field("material_total_cost");
+				refresh_field("material_detail_summerized");
+				refresh_field("material_detail_summarized_by_month_section_a");
+				refresh_field("material_detail_summarized_by_month_section_b");
+			}
+		  })
 		}
+			//Script to populate child tables for task detail by month
+			if (taskParent) {
+
+				frappe.call({
+
+					method: "erpnext.task_week_detail_populate_api.get_task_by_task_id",
+					args: { activity: taskParent }
+
+				}).done((r) => {
+					$.each(r.message, function(_i, e) {
+						console.log("abebeb beso bela ena mote ende", e)
+
+						var entryOne = frm.add_child("operational_plan_detail_one");
+						entryOne.activity = e[0];
+						entryOne.activity_name = e[17];
+						entryOne.duration = e[71];
+						entryOne.uom = e[61];
+						console.log("eee", e)
+						entryOne.productivity = e[51]
+
+
+							var value = planned_qty / entryOne.productivity;
+							let remain = value;
+
+
+						var remainingPlannedFor2 = 0;
+
+						if (planned_qty) {
+
+							console.log("planned :", planned_qty, "productivity: ", entryOne.productivity, "value: ", value,)
+
+
+							const months = ['sep', 'oct', 'nov', 'dec', 'jan', 'feb'];
+							var total_planned = 0;
+
+							for (let i = 0; i < months.length; i++) {
+								const currentMonth = months[i];
+								const allowedDays = frm.doc.no[0][currentMonth];
+									remainingPlannedFor2 += frm.doc.no[0][currentMonth];
+
+								if (remain <= allowedDays) {
+									entryOne[`m_${i + 1}`] = remain;
+									total_planned += entryOne[`m_${i + 1}`];
+									console.log("remain", remain)
+									break;
+								} else {
+									entryOne[`m_${i + 1}`] = allowedDays;
+									total_planned += entryOne[`m_${i + 1}`];
+									remain -= allowedDays;
+									console.log("remain", remain)
+								}
+							}
+
+							entryOne.planned = total_planned;
+
+							frm.refresh_field("operational_plan_detail_one");
+
+						}
+
+						var entryTwo = frm.add_child("operational_plan_detail_two");
+						entryTwo.activity = e[0];
+
+						entryTwo.activity_name = e[17];
+						entryTwo.duration = e[71];
+						entryTwo.uom = e[61];
+						var totalPlannedTwo = 0;
+
+						const monthsSecond = ['mar', 'apr', 'may', 'jun', 'july', 'oct'];
+
+						console.log("remainingPlannedFor2", remainingPlannedFor2); 
+
+						if (planned_qty > remainingPlannedFor2) {
+							for (let i = 0; i < monthsSecond.length; i++) {
+								const currentMonth = monthsSecond[i];
+								const allowedDays = frm.doc.no[0][currentMonth];
+
+								if (remain <= allowedDays) {
+									entryTwo[`m_${i + 7}`] = remain;
+									totalPlannedTwo += entryTwo[`m_${i + 7}`];
+									console.log("remain", remain)
+									break;
+								} else {
+									entryTwo[`m_${i + 7}`] = allowedDays;
+									totalPlannedTwo += entryTwo[`m_${i + 7}`];
+									remain -= allowedDays;
+									console.log("remain", remain)
+								}
+							}
+							entryTwo.planned = totalPlannedTwo;
+							refresh_field("operational_plan_detail_two");
+
+
+						}
+					})
+
+					refresh_field("operational_plan_detail_one");
+					refresh_field("operational_plan_detail_two");
+				})
+			}
 
 
 	});
@@ -1238,13 +1207,7 @@ frappe.ui.form.on("Operational Plan Detail", {
 	},
 
 	planned: function(frm, cdt, cdn) {
-		var row = locals[cdt][cdn];
-		row.planned_day = (row.planned * row.duration) / (row.quantity);
-		console.log("ppppppppppppppp", row.planned_day, row.planned_day)
-		frm.refresh_field("task_list");
 		AutoPopulate(frm, cdt, cdn);
-
-		
 	}
 });
 
@@ -1305,35 +1268,6 @@ frappe.ui.form.on('Operational Plan Detail One', {
 	},
 });
 
-frappe.ui.form.on('Operational Plan', {
-	before_save: function(frm, cdt, cdn) {
-		console.log("i am going to save it")
-		calculateMachineryValues(frm, cdt, cdn, "1");
-		calculateMaterialValues(frm, cdt, cdn, "1");
-		calculateManpowerValues(frm, cdt, cdn, "1");
-
-		calculateMachineryValues(frm, cdt, cdn, "2");
-		calculateMaterialValues(frm, cdt, cdn, "2");
-		calculateManpowerValues(frm, cdt, cdn, "2");
-
-		calculateMachineryValues(frm, cdt, cdn, "3");
-		calculateMaterialValues(frm, cdt, cdn, "3");
-		calculateManpowerValues(frm, cdt, cdn, "3");
-
-		calculateMachineryValues(frm, cdt, cdn, "4");
-		calculateMaterialValues(frm, cdt, cdn, "4");
-		calculateManpowerValues(frm, cdt, cdn, "4");
-
-		calculateMachineryValues(frm, cdt, cdn, "5");
-		calculateMaterialValues(frm, cdt, cdn, "5");
-		calculateManpowerValues(frm, cdt, cdn, "5");
-
-		calculateMachineryValues(frm, cdt, cdn, "6");
-		calculateMaterialValues(frm, cdt, cdn, "6");
-		calculateManpowerValues(frm, cdt, cdn, "6");
-	},
-});
-
 frappe.ui.form.on('Operational Plan Detail Two', {
 	m_7: function(frm, cdt, cdn) {
 		calculateMachineryValuesB(frm, cdt, cdn, "7");
@@ -1361,34 +1295,6 @@ frappe.ui.form.on('Operational Plan Detail Two', {
 		calculateManpowerValuesB(frm, cdt, cdn, "11");
 	},
 	m_12: function(frm, cdt, cdn) {
-		calculateMachineryValuesB(frm, cdt, cdn, "12");
-		calculateMaterialValuesB(frm, cdt, cdn, "12");
-		calculateManpowerValuesB(frm, cdt, cdn, "12");
-	},
-});
-
-frappe.ui.form.on('Operational Plan', {
-	before_save: function(frm, cdt, cdn) {
-		calculateMachineryValuesB(frm, cdt, cdn, "7");
-		calculateMaterialValuesB(frm, cdt, cdn, "7");
-		calculateManpowerValuesB(frm, cdt, cdn, "7");
-
-		calculateMachineryValuesB(frm, cdt, cdn, "8");
-		calculateMaterialValuesB(frm, cdt, cdn, "8");
-		calculateManpowerValuesB(frm, cdt, cdn, "8");
-
-		calculateMachineryValuesB(frm, cdt, cdn, "9");
-		calculateMaterialValuesB(frm, cdt, cdn, "9");
-		calculateManpowerValuesB(frm, cdt, cdn, "9");
-
-		calculateMachineryValuesB(frm, cdt, cdn, "10");
-		calculateMaterialValuesB(frm, cdt, cdn, "10");
-		calculateManpowerValuesB(frm, cdt, cdn, "10");
-
-		calculateMachineryValuesB(frm, cdt, cdn, "11");
-		calculateMaterialValuesB(frm, cdt, cdn, "11");
-		calculateManpowerValuesB(frm, cdt, cdn, "11");
-
 		calculateMachineryValuesB(frm, cdt, cdn, "12");
 		calculateMaterialValuesB(frm, cdt, cdn, "12");
 		calculateManpowerValuesB(frm, cdt, cdn, "12");
@@ -1616,7 +1522,7 @@ function calculateMachineryValuesB(frm, cdt, cdn, m) {
 		var activityMonthQuantity = 0;
 
 		for (var j = 0; j < frm.doc.operational_plan_detail_two.length; j++) {
-			var monthData = frm.doc.operational_plan_detail_two[j];
+			var monthData = frm.doc.operational_plan_detail_two[j]; 
 			if (monthData.activity == machineryItem.activity) { // Compare activity
 				activityMonthQuantity = monthData["m_" + m] || 0;
 				console.log("activity month quantity", activityMonthQuantity)

@@ -259,6 +259,7 @@ frappe.ui.form.on('Operational Plan Detail One1', {
 		calculateManpowerValues(frm, cdt, cdn, "6");
 	},
 });
+
 frappe.ui.form.on('Operational Plan Detail Two2', {
 	m_7: function(frm, cdt, cdn) {
 		calculateMachineryValuesB(frm, cdt, cdn, "7");
@@ -549,38 +550,38 @@ function calculateMachineryValuesB(frm, cdt, cdn, m) {
 
 
 
-frappe.ui.form.on('Operational Plan Detail Two2', {
-	m_7: function(frm, cdt, cdn) {
-		calculateMachineryValuesB(frm, cdt, cdn, "7");
-		calculateMaterialValuesB(frm, cdt, cdn, "7");
-		calculateManpowerValuesB(frm, cdt, cdn, "7");
-	},
-	m_8: function(frm, cdt, cdn) {
-		calculateMachineryValuesB(frm, cdt, cdn, "8");
-		calculateMaterialValuesB(frm, cdt, cdn, "8");
-		calculateManpowerValuesB(frm, cdt, cdn, "8");
-	},
-	m_9: function(frm, cdt, cdn) {
-		calculateMachineryValuesB(frm, cdt, cdn, "9");
-		calculateMaterialValuesB(frm, cdt, cdn, "9");
-		calculateManpowerValuesB(frm, cdt, cdn, "9");
-	},
-	m_10: function(frm, cdt, cdn) {
-		calculateMachineryValuesB(frm, cdt, cdn, "10");
-		calculateMaterialValuesB(frm, cdt, cdn, "10");
-		calculateManpowerValuesB(frm, cdt, cdn, "10");
-	},
-	m_11: function(frm, cdt, cdn) {
-		calculateMachineryValuesB(frm, cdt, cdn, "11");
-		calculateMaterialValuesB(frm, cdt, cdn, "11");
-		calculateManpowerValuesB(frm, cdt, cdn, "11");
-	},
-	m_12: function(frm, cdt, cdn) {
-		calculateMachineryValuesB(frm, cdt, cdn, "12");
-		calculateMaterialValuesB(frm, cdt, cdn, "12");
-		calculateManpowerValuesB(frm, cdt, cdn, "12");
-	},
-});
+// frappe.ui.form.on('Operational Plan Detail Two2', {
+// 	m_7: function(frm, cdt, cdn) {
+// 		calculateMachineryValuesB(frm, cdt, cdn, "7");
+// 		calculateMaterialValuesB(frm, cdt, cdn, "7");
+// 		calculateManpowerValuesB(frm, cdt, cdn, "7");
+// 	},
+// 	m_8: function(frm, cdt, cdn) {
+// 		calculateMachineryValuesB(frm, cdt, cdn, "8");
+// 		calculateMaterialValuesB(frm, cdt, cdn, "8");
+// 		calculateManpowerValuesB(frm, cdt, cdn, "8");
+// 	},
+// 	m_9: function(frm, cdt, cdn) {
+// 		calculateMachineryValuesB(frm, cdt, cdn, "9");
+// 		calculateMaterialValuesB(frm, cdt, cdn, "9");
+// 		calculateManpowerValuesB(frm, cdt, cdn, "9");
+// 	},
+// 	m_10: function(frm, cdt, cdn) {
+// 		calculateMachineryValuesB(frm, cdt, cdn, "10");
+// 		calculateMaterialValuesB(frm, cdt, cdn, "10");
+// 		calculateManpowerValuesB(frm, cdt, cdn, "10");
+// 	},
+// 	m_11: function(frm, cdt, cdn) {
+// 		calculateMachineryValuesB(frm, cdt, cdn, "11");
+// 		calculateMaterialValuesB(frm, cdt, cdn, "11");
+// 		calculateManpowerValuesB(frm, cdt, cdn, "11");
+// 	},
+// 	m_12: function(frm, cdt, cdn) {
+// 		calculateMachineryValuesB(frm, cdt, cdn, "12");
+// 		calculateMaterialValuesB(frm, cdt, cdn, "12");
+// 		calculateManpowerValuesB(frm, cdt, cdn, "12");
+// 	},
+// });
 
 //calculating duration
 frappe.ui.form.on('Operational Plan', {
@@ -1458,6 +1459,7 @@ function AutoPopulate(frm, cdt, cdn) {
 		;
 		//Script to populate child tables for material
 		if (taskParent) {
+			
 			frappe.call({
 
 				method: "erpnext.material_populate_api.get_material_by_task",
@@ -1473,6 +1475,7 @@ function AutoPopulate(frm, cdt, cdn) {
 					entry.subject = subject;
 					entry.uom = e.uom;
 					entry.qty = e.qty;
+					
 					//fetching the quantity from the database
 					frappe.call({
 						method: 'frappe.client.get_list',
@@ -1552,7 +1555,8 @@ function AutoPopulate(frm, cdt, cdn) {
 							newEntrySummerized_section_b.unit = e.uom;
 							newEntrySummerized_section_b.item = e.item1;
 						}
-					} else {
+					}
+					else {
 
 						var material_exist = false;
 

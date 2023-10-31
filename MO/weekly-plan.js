@@ -17,6 +17,51 @@ function addDays(date, days) {
 	return result;
 }
 
+frappe.ui.form.on('Weekly detail plan', {
+	d_1: function(frm, cdt, cdn){
+		prohobitUpperSum1(frm, cdt, cdn, "d_1")
+	},
+	d_2: function(frm, cdt, cdn){
+		prohobitUpperSum1(frm, cdt, cdn, "d_2")
+	},
+	d_3: function(frm, cdt, cdn){
+		prohobitUpperSum1(frm, cdt, cdn, "d_3")
+	},
+	d_4: function(frm, cdt, cdn){
+		prohobitUpperSum1(frm, cdt, cdn, "d_4")
+	},
+	
+	d_5: function(frm, cdt, cdn){
+		prohobitUpperSum1(frm, cdt, cdn, "d_5")
+	},
+	d_6: function(frm, cdt, cdn){
+		prohobitUpperSum1(frm, cdt, cdn, "d_6")
+	},
+})
+
+
+function prohobitUpperSum1(frm, cdt, cdn, month) {
+	var total = 0;
+	var row = locals[cdt][cdn];
+	console.log("localssss for each month", row);
+
+	// Calculate the total
+	total += row.d_1 ? parseFloat(row.d_1) : 0;
+	total += row.d_2 ? parseFloat(row.d_2) : 0;
+	total += row.d_3 ? parseFloat(row.d_3) : 0;
+	total += row.d_4 ? parseFloat(row.d_4) : 0;
+	total += row.d_5 ? parseFloat(row.d_5) : 0;
+	total += row.d_6 ? parseFloat(row.d_6) : 0;
+
+	console.log("total sum", total);
+
+	if(total > row.planned_this_week){
+		row[month] = null;
+		frm.refresh_field("weekly_detail_plan")
+		frappe.show_alert("Each day sum should be lower than the planned")
+	}
+}
+
 frappe.ui.form.on("Weekly Plan", {
 	project: function(frm, cdt, cdn) {
 		var d = locals[cdt][cdn];
@@ -1184,6 +1229,8 @@ function assignMachineryWeek(frm, cdt, cdn, w) {
 	frm.doc.weekly_machinery_detail_plan_by_day.map((item, idx) => {
 		if (machineryAggrigate[item.machinery_type]) {
 			item[w] = machineryAggrigate[item.machinery_type];
+		} else {
+			item[w] = 0;
 		}
 	})
 
@@ -1215,45 +1262,12 @@ function assignMachineryWeekNonpayable(frm, cdt, cdn, w) {
 	frm.doc.non_payable_weekly_machinery_detail_plan_by_day.map((item, idx) => {
 		if (machineryAggrigate[item.machinery_type]) {
 			item[w] = machineryAggrigate[item.machinery_type];
+		} else {
+			item[w] = 0;
 		}
 	})
 
 	frm.refresh_field("non_payable_weekly_machinery_detail_plan_by_day")
-}
-
-function assignManpowerWeek(frm, cdt, cdn, w) {
-
-	var manpowerAggrigate = {};
-	//assign to the machinery table
-	frm.doc.manpower1 && frm.doc.manpower1.map((manpower, index) => {
-		var act_qty = 0;
-		frm.doc.weekly_detail_plan.map((week, i) => {
-			console.log("weeeeeeeeeeeeeeek", week)
-			console.log("manpower", manpower)
-			if (week.activity == manpower.activity) {
-				console.log("week value", week[w])
-				act_qty = week[w] || 0;
-			}
-		})
-		console.log("activityyyyyyy quantity", act_qty)
-
-		if (manpowerAggrigate[manpower.job_title]) {
-			manpowerAggrigate[manpower.job_title] += ((act_qty * manpower.uf * manpower.labor_no * manpower.li_permanent) / manpower.productivity);
-		}
-		else {
-			manpowerAggrigate[manpower.job_title] = ((act_qty * manpower.uf * manpower.efficency * manpower.li_permanent) / manpower.productivity);
-		}
-	})
-
-	console.log("manpower aggrigate", manpowerAggrigate)
-
-	frm.doc.weekly_manpower_detail_plan_by_day.map((item, idx) => {
-		if (manpowerAggrigate[item.labor_type]) {
-			item[w] = manpowerAggrigate[item.labor_type];
-		}
-	})
-
-	frm.refresh_field("weekly_manpower_detail_plan_by_day")
 }
 
 function assignManpowerWeekNonpayable(frm, cdt, cdn, w) {
@@ -1285,6 +1299,8 @@ function assignManpowerWeekNonpayable(frm, cdt, cdn, w) {
 	frm.doc.non_payable_weekly_manpower_detail_plan_by_day.map((item, idx) => {
 		if (manpowerAggrigate[item.labor_type]) {
 			item[w] = manpowerAggrigate[item.labor_type];
+		} else {
+			item[w] = 0;
 		}
 	})
 
@@ -1318,6 +1334,8 @@ function assignMaterialWeek(frm, cdt, cdn, w) {
 	frm.doc.weekly_material_detail_plan_by_day.map((item, idx) => {
 		if (materialAggrigate[item.material_name]) {
 			item[w] = materialAggrigate[item.material_name];
+		} else {
+			item[w] = 0;
 		}
 	})
 
@@ -1351,6 +1369,8 @@ function assignMaterialWeekNonpayable(frm, cdt, cdn, w) {
 	frm.doc.non_payable_weekly_material_detail_plan_by_day.map((item, idx) => {
 		if (materialAggrigate[item.material_name]) {
 			item[w] = materialAggrigate[item.material_name];
+		} else {
+			item[w] = 0;
 		}
 	})
 
