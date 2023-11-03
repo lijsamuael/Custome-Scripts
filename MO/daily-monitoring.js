@@ -8,22 +8,32 @@ cur_frm.add_fetch('activity', 'subject', 'subject');
 
 
 frappe.ui.form.on("New Daily Plan", {
-	 weekly_plan: function(frm, cdt, cdn) {
-		if(!frm.doc.day){
+	weekly_plan: function(frm, cdt, cdn) {
+		if (!frm.doc.day) {
 			frm.doc.weekly_plan = null;
 			frm.refresh_field("weekly_plan")
 			frappe.show_alert("Please Select Day First")
 		}
-	 }
- });
+	}
+});
+
+var allActivities = []
 
 frappe.ui.form.on("New Daily Plan Detail", {
-	activity: function(frm, cdt, cdn){
+	activity: function(frm, cdt, cdn) {
 		var activity = []
 		var row = locals[cdt][cdn]
 		activity.push(row.activity)
-		console.log("activity", activity)
-			ExecuteWeeklyPlanDetail(frm, activity, null);
+		allActivities.push(row.activity)
+		console.log("activity", allActivities)
+
+	}
+})
+
+frappe.ui.form.on("New Daily Plan", {
+	fetch: function(frm, cdt, cdn) {
+		ExecuteWeeklyPlanDetail(frm, allActivities, null);
+		frappe.show_alert("Data has been fetched Successfully!")
 	}
 })
 
@@ -181,7 +191,7 @@ frappe.ui.form.on("New Daily Plan", {
 					WPAutoPopulate(frm, activities, null);
 				}
 			})
-			
+
 			//get the start and end date from the monthly  plan
 			frappe.call({
 				method: 'frappe.client.get_list',
@@ -194,11 +204,11 @@ frappe.ui.form.on("New Daily Plan", {
 				},
 				callback: async function(response) {
 					console.log("Response for nonpayable", response.message)
-					
+
 					var activitiesNonPayable = [];
 					response.message.map((item, index) => {
 						if (item["d_" + day_value]) {
-								activitiesNonPayable.push(item)
+							activitiesNonPayable.push(item)
 						}
 					})
 					console.log("activitiesNonPayable", activitiesNonPayable);
@@ -310,7 +320,7 @@ function WPAutoPopulate(frm, mp_activites, planned_qty) {
 		target_row.planned_qty = wp_activity["d_" + day_value];
 		target_row.rate = wp_activity.rate;
 		target_row.amount = target_row.quantity * target_row.rate;
-		target_row.crew_assigned = wp_activity.crew_assigned;	
+		target_row.crew_assigned = wp_activity.crew_assigned;
 		target_row.scontract_assigned = wp_activity.scontract_assigned;
 
 
@@ -375,7 +385,21 @@ function ExecuteWeeklyPlanDetail(frm, planned_qty) {
 	var number_of_items_for_material = 0;
 	var sum_of_unit_rate_for_material = 0;
 
-	var task_lists = frm.doc.daily_plan_detail;
+	var task_lists = frm.doc.daily_plan_detail.filter((item) => {
+		if(!item.crew_assigned){
+			return item;
+		}
+	});
+
+	var crewed_tasks = frm.doc.daily_plan_detail.filter((item) => {
+		if(item.crew_assigned){
+			return item;
+		}
+	});
+
+	console.log("non crew assinged task lists", task_lists);
+	console.log("crew assinged task lists", crewed_tasks);
+
 
 	var allMachinesMap = new Map();
 	var allMaterialMap = new Map();
@@ -389,7 +413,7 @@ function ExecuteWeeklyPlanDetail(frm, planned_qty) {
 	frm.doc.manpower_detail_summerized = []
 	frm.doc.material_detail_summerized = []
 
-
+	//fetch the material machinery and manpower detail for tasks that crew is not assigned
 	$.each(task_lists, function(_i, eMain) {
 
 		var taskParent = eMain.activity;
@@ -412,12 +436,247 @@ function ExecuteWeeklyPlanDetail(frm, planned_qty) {
 
 		for (var i = 0; i < machinery.length; i++) {
 			if (machinery[i].activity === taskParent) {
-						machineryExist = true;
+				machineryExist = true;
 				break;
 			}
 		}
-		
-		if(!machineryExist){
+
+		if (taskParent) {
+				frappe.call({
+					method: "erpnext.machinary_populate_api.get_machinary_by_task",
+					args: { parent: taskParent }
+				}).done((r) => {
+					$.each(r.message, function(_i, e) {
+
+						var entry = frm.add_child("machinery");
+						entry.id_mac = e.id_mac;
+						entry.type = e.type;
+						entry.activity = taskParent;
+						entry.uf = e.uf;
+						entry.efficency = e.efficency;
+						entry.rental_rate = e.rental_rate;
+						grand_total_cost_for_machinary += entry.qty * entry.rental_rate;
+						number_of_items_for_machinary += 1;
+						sum_of_unit_rate_for_machinary += entry.rental_rate;
+						entry.total_hourly_cost = entry.qty * entry.rental_rate;
+
+
+						//fetching the quantity from the database
+						frappe.call({
+							method: 'frappe.client.get_list',
+							args: {
+								doctype: 'Task',
+								filters: {
+									'name': e.parent,
+								},
+								fields: ["*"],
+							},
+							callback: async function(response) {
+								console.log("Response ", response.message[0].quantity)
+								entry.qty = response.message[0].quantity;
+								entry.subject = response.message[0].subject;
+								entry.uom = response.message[0].unit;
+								frm.refresh_field("machinery")
+
+							}
+						})
+
+
+						var entrySummerized = frm.add_child("machinery_detail_summerized");
+						entrySummerized.id_mac = e.id_mac;
+						entrySummerized.type = e.type;
+						entrySummerized.qty = e.qty * planned_qty;
+						entrySummerized.uf = e.uf;
+						entrySummerized.efficency = e.efficency;
+						entrySummerized.rental_rate = e.rental_rate;
+						entrySummerized.total_hourly_cost = entrySummerized.qty * entrySummerized.rental_rate;
+
+					})
+
+					frm.doc.equipment_total_cost = grand_total_cost_for_machinary;
+					frm.doc.equipment_unit_rate = (sum_of_unit_rate_for_machinary / number_of_items_for_machinary);
+
+					refresh_field("machinery");
+					refresh_field("equipment_total_cost");
+					refresh_field("equipment_unit_rate");
+					refresh_field("machinery_detail_summerized");
+				})
+			}
+
+
+		//Script to populate child tables for manpower
+		var manpower1 = frm.doc.manpower1 || [];
+		var manpowerExist = false;
+
+		for (var i = 0; i < manpower1.length; i++) {
+			if (manpower1[i].activity === taskParent) {
+				manpowerExist = true;
+				break;
+			}
+		}
+
+			if (taskParent) {
+				frappe.call({
+					method: "erpnext.manpower_populate_api.get_manpower_by_task",
+					args: { parent: taskParent }
+				}).done((r) => {
+					$.each(r.message, function(_i, e) {
+						var entry = frm.add_child("manpower1");
+						entry.id_map = e.id_map;
+						entry.job_title = e.job_title;
+						entry.labor_no = e.mp_number || 1;
+						entry.activity = taskParent;
+						entry.uf = e.uf;
+						entry.efficency = e.efficency;
+						entry.hourly_cost = e.hourly_cost;
+						grand_total_cost_for_manpower += entry.qty * entry.hourly_cost;
+						number_of_items_for_manpower += 1;
+						sum_of_unit_rate_for_manpower += entry.hourly_cost;
+						entry.total_hourly_cost = entry.qty * entry.hourly_cost;
+
+						frappe.call({
+							method: 'frappe.client.get_list',
+							args: {
+								doctype: 'Task',
+								filters: {
+									'name': e.parent,
+								},
+								fields: ["*"],
+							},
+							callback: async function(response) {
+								console.log("Response ", response.message[0].quantity)
+								entry.qty = response.message[0].quantity;
+								entry.subject = response.message[0].subject;
+								frm.refresh_field("manpower1")
+
+							}
+						})
+
+
+						var entryMPSummerized = frm.add_child("manpower_detail_summerized");
+						entryMPSummerized.id_map = e.id_map;
+						entryMPSummerized.job_title = e.job_title;
+						entryMPSummerized.qty = e.qty * planned_qty;
+						entryMPSummerized.uf = e.uf;
+						entryMPSummerized.efficency = e.efficency;
+						entryMPSummerized.hourly_cost = e.hourly_cost;
+						entryMPSummerized.total_hourly_cost = entryMPSummerized.qty * entryMPSummerized.hourly_cost;
+					})
+
+
+					frm.doc.man_power_total_cost = grand_total_cost_for_manpower;
+					frm.doc.man_power_unit_rate = (sum_of_unit_rate_for_manpower / number_of_items_for_manpower);
+
+					refresh_field("manpower1");
+					refresh_field("man_power_total_cost");
+					refresh_field("man_power_unit_rate");
+					refresh_field("manpower_detail_summerized");
+				})
+			}
+
+
+		//Script to populate child tables for material
+		var material1 = frm.doc.material1 || [];
+		var materialExist = false;
+
+		for (var i = 0; i < material1.length; i++) {
+			if (material1[i].activity === taskParent) {
+				materialExist = true;
+				break;
+			}
+		}
+
+			if (taskParent) {
+				frappe.call({
+
+					method: "erpnext.material_populate_api.get_material_by_task",
+					args: { parent: taskParent }
+
+				}).done((r) => {
+					$.each(r.message, function(_i, e) {
+
+						var entry = frm.add_child("material1");
+						entry.id_mat = e.id_mat;
+						entry.item1 = e.item1;
+						entry.activity = taskParent;
+						entry.uom = e.uom;
+						entry.uf = e.uf;
+						entry.efficency = e.efficency;
+						entry.unit_price = e.unit_price;
+						grand_total_cost_for_material += entry.qty * entry.unit_price;
+						number_of_items_for_material += 1;
+						sum_of_unit_rate_for_material += entry.unit_price;
+						entry.total_cost = entry.qty * entry.unit_price;
+
+						frappe.call({
+							method: 'frappe.client.get_list',
+							args: {
+								doctype: 'Task',
+								filters: {
+									'name': e.parent,
+								},
+								fields: ["*"],
+							},
+							callback: async function(response) {
+								console.log("Response ", response.message[0].quantity)
+								entry.qty = response.message[0].quantity;
+								entry.subject = response.message[0].subject;
+								frm.refresh_field("material1")
+
+							}
+						})
+
+						var entryMaterialSummerized = frm.add_child("material_detail_summerized");
+						entryMaterialSummerized.id_mat = e.id_mat;
+						entryMaterialSummerized.item1 = e.item1;
+						entryMaterialSummerized.uom = e.uom;
+						entryMaterialSummerized.qty = e.qty * planned_qty;
+						entryMaterialSummerized.uf = e.uf;
+						entryMaterialSummerized.efficency = e.efficency;
+						entryMaterialSummerized.unit_price = e.unit_price;
+						entryMaterialSummerized.total_cost = entryMaterialSummerized.qty * entryMaterialSummerized.unit_price;
+					})
+
+					frm.doc.material_total_cost = grand_total_cost_for_material;
+					//frm.doc.man_power_unit_rate = (sum_of_unit_rate/number_of_items);
+
+					refresh_field("material1");
+					refresh_field("material_total_cost");
+					refresh_field("material_detail_summerized");
+				})
+			}
+
+	})
+
+	//crew assgined tasks manipulation
+	$.each(crewed_tasks, function(_i, eMain) {
+
+		var taskParent = eMain.activity;
+		var activity_name = eMain.activity_name;
+
+		// frm.doc.weekly_detail_plan = []
+		// frm.doc.machinery = []
+		// frm.doc.manpower1 = []
+		// frm.doc.material1 = []
+
+		frm.doc.machinery_detail_summerized = []
+		frm.doc.manpower_detail_summerized = []
+		frm.doc.material_detail_summerized = []
+
+
+
+		// Check if activity exists in non_payable_weekly_detail_plan
+		var machinery = frm.doc.machinery || [];
+		var machineryExist = false;
+
+		for (var i = 0; i < machinery.length; i++) {
+			if (machinery[i].activity === taskParent) {
+				machineryExist = true;
+				break;
+			}
+		}
+
+		if (!machineryExist) {
 			if (taskParent) {
 				frappe.call({
 					method: "erpnext.machinary_populate_api.get_machinary_by_task",
@@ -488,12 +747,12 @@ function ExecuteWeeklyPlanDetail(frm, planned_qty) {
 
 		for (var i = 0; i < manpower1.length; i++) {
 			if (manpower1[i].activity === taskParent) {
-							manpowerExist = true;
+				manpowerExist = true;
 				break;
 			}
 		}
 
-		if(!manpowerExist){
+		if (!manpowerExist) {
 			if (taskParent) {
 				frappe.call({
 					method: "erpnext.manpower_populate_api.get_manpower_by_task",
@@ -561,12 +820,12 @@ function ExecuteWeeklyPlanDetail(frm, planned_qty) {
 
 		for (var i = 0; i < material1.length; i++) {
 			if (material1[i].activity === taskParent) {
-								materialExist = true;
+				materialExist = true;
 				break;
 			}
 		}
 
-		if(!materialExist){
+		if (!materialExist) {
 			if (taskParent) {
 				frappe.call({
 
@@ -627,8 +886,9 @@ function ExecuteWeeklyPlanDetail(frm, planned_qty) {
 				})
 			}
 		}
-		
+
 	})
+	
 }
 
 function ExecuteWeeklyPlanDetailNonPayable(frm, task_lists) {

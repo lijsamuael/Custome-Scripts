@@ -1036,7 +1036,8 @@ frappe.ui.form.on("Operational Plan", {
 		frm.set_query("activity", "task_list", function() {
 			return {
 				"filters": {
-					"project": frm.doc.project
+					"project": frm.doc.project,
+					"is_group": 0
 				}
 			}
 		});
@@ -1050,7 +1051,8 @@ frappe.ui.form.on("Operational Plan", {
 			frm.set_query("activity", "task_list", function() {
 				return {
 					"filters": {
-						"project": frm.doc.project
+						"project": frm.doc.project,
+						"is_group": 0
 					}
 				}
 			});
@@ -1068,31 +1070,31 @@ function AutoPopulate(frm, cdt, cdn) {
 	var d = locals[cdt][cdn];
 	var activity = frappe.model.get_value(d.doctype, d.name, "activity");
 
-	if (activity && date1 && date2) {
-		frappe.call({
-			method: "erpnext.timesheet_sum_of_executed_qty.get_executed_quantity_from_timesheet",
-			args: { activity: activity, date1: date1, date2: date2 }
-		}).done((r) => {
-			if (r.message.length >= 1)
-				if (r.message[0]) {
+	// if (activity && date1 && date2) {
+	// 	frappe.call({
+	// 		method: "erpnext.timesheet_sum_of_executed_qty.get_executed_quantity_from_timesheet",
+	// 		args: { activity: activity, date1: date1, date2: date2 }
+	// 	}).done((r) => {
+	// 		if (r.message.length >= 1)
+	// 			if (r.message[0]) {
 
-					var to_date_executed = r.message[0];
-					// frappe.model.set_value(d.doctype, d.name, "to_date_executed", (parseFloat(to_date_executed) || 0));
-					var quantity = frappe.model.get_value(d.doctype, d.name, "quantity");
-					var rate = frappe.model.get_value(d.doctype, d.name, "rate");
-					var amount = quantity * rate;
-					var remaining_planned_qty = quantity - parseFloat(to_date_executed);
-					frappe.model.set_value(d.doctype, d.name, "remaining_planned_qty", remaining_planned_qty);
-					frappe.model.set_value(d.doctype, d.name, "amount", amount);
-					frappe.model.set_value(d.doctype, d.name, "actual_quantity", quantity);
-					frappe.model.set_value(d.doctype, d.name, "to_date_executed", 0);
+	// 				var to_date_executed = r.message[0];
+	// 				// frappe.model.set_value(d.doctype, d.name, "to_date_executed", (parseFloat(to_date_executed) || 0));
+	// 				var quantity = frappe.model.get_value(d.doctype, d.name, "quantity");
+	// 				var rate = frappe.model.get_value(d.doctype, d.name, "rate");
+	// 				var amount = quantity * rate;
+	// 				var remaining_planned_qty = quantity - parseFloat(to_date_executed);
+	// 				frappe.model.set_value(d.doctype, d.name, "remaining_planned_qty", remaining_planned_qty);
+	// 				frappe.model.set_value(d.doctype, d.name, "amount", amount);
+	// 				frappe.model.set_value(d.doctype, d.name, "actual_quantity", quantity);
+	// 				frappe.model.set_value(d.doctype, d.name, "to_date_executed", 0);
 
 
-				}
-		})
+	// 			}
+	// 	})
 
-		refresh_field("task_list");
-	}
+	// 	refresh_field("task_list");
+	// }
 
 	// frm.doc.operational_plan_detail_one1 = []
 	// frm.doc.operational_plan_detail_two2 = []
@@ -1712,15 +1714,34 @@ function AutoCalculateMonthValueTwo(doctype, name, planned) {
 	//frappe.model.set_value(doctype, name, 'm_12', (planned / 24));
 }
 
-frappe.ui.form.on("Operational Plan Detail", {
-	activity: function(frm, cdt, cdn) {
+frappe.ui.form.on("Operational Plan", {
+	fetch: function(frm, cdt, cdn) {
 		AutoPopulate(frm, cdt, cdn);
 	},
-
-	planned: function(frm, cdt, cdn) {
-		AutoPopulate(frm, cdt, cdn);
-	}
 });
+
+frappe.ui.form.on("Operational Plan Detail", {
+	activity: function(frm, cdt, cdn) {
+		var row = locals[cdt][cdn];
+		var table = frm.doc.task_list;
+		console.log("row", row);
+		console.log("table", table);
+
+		for (var i = 0; i < table.length - 1; i++) {
+			if (table[i].activity == row.activity) {
+				frappe.show_alert("You cannot select a similar Task again!");
+				frm.doc.task_list.splice(i, 1); // Remove the row from the task_list
+				frm.refresh_field("task_list"); // Refresh the field to reflect the change
+				return;
+			}
+		}
+	},
+
+	// planned: function(frm, cdt, cdn) {
+	// 	AutoPopulate(frm, cdt, cdn);
+	// }
+});
+
 
 frappe.ui.form.on("Operational Plan Detail One1", {
 	planned: function(frm, cdt, cdn) {

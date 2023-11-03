@@ -67,16 +67,16 @@ frappe.ui.form.on("Monthly Plan", {
 
 
 frappe.ui.form.on('Monthly Plan Detail Week View', {
-	w_1: function(frm, cdt, cdn){
+	w_1: function(frm, cdt, cdn) {
 		prohobitUpperSum1(frm, cdt, cdn, "w_1")
 	},
-	w_2: function(frm, cdt, cdn){
+	w_2: function(frm, cdt, cdn) {
 		prohobitUpperSum1(frm, cdt, cdn, "w_2")
 	},
-	w_3: function(frm, cdt, cdn){
+	w_3: function(frm, cdt, cdn) {
 		prohobitUpperSum1(frm, cdt, cdn, "w_3")
 	},
-	w_4: function(frm, cdt, cdn){
+	w_4: function(frm, cdt, cdn) {
 		prohobitUpperSum1(frm, cdt, cdn, "w_4")
 	}
 })
@@ -95,7 +95,7 @@ function prohobitUpperSum1(frm, cdt, cdn, month) {
 
 	console.log("total sum", total);
 
-	if(total > row.planned_this_month){
+	if (total > row.planned_this_month) {
 		row[month] = null;
 		frm.refresh_field("monthly_plan_detail_week_view")
 		frappe.show_alert("Each week sum should be lower than the planned")
@@ -260,7 +260,8 @@ function mainFunction(frm, cdt, cdn) {
 						'parent': frm.doc.operational_plan,
 
 					},
-					fields: ['*']
+					fields: ['*'],
+					limit_page_length: 1000
 				},
 				callback: async function(response) {
 					var resp = response.message;
@@ -295,7 +296,7 @@ function mainFunction(frm, cdt, cdn) {
 							fields: ["*"],
 						},
 						callback: async function(response) {
-							console.log("Response of starting and end date", response.message)
+							console.log("Responsee of starting and end date", response.message)
 							response.message.map((item, idx) => {
 								if (item.month_no == idxValue) {
 									frm.doc.start_date = item.start_date;
@@ -352,7 +353,7 @@ function mainFunction(frm, cdt, cdn) {
 					});
 
 
-					console.log("Filtered results", filteredResults);
+					console.log("Filtered resultsssssss 1", filteredResults);
 
 					source_doc.task_list = [];
 					frm.doc.monthly_plan_detail_week_view = [];
@@ -451,7 +452,7 @@ function mainFunction(frm, cdt, cdn) {
 											fields: ["quantity", "productivity"],
 										},
 										callback: async function(response) {
-											console.log("Response ", response.message[0].quantity)
+											console.log("Responsed ", response.message[0].quantity)
 											target_row.qty = response.message[0].quantity;
 											task_qty = response.message[0].quantity;
 											task_productivity = response.message[0].productivity;
@@ -532,7 +533,7 @@ function mainFunction(frm, cdt, cdn) {
 											fields: ["quantity", "productivity"],
 										},
 										callback: async function(response) {
-											console.log("Response ", response.message[0].quantity)
+											console.log("Responsde ", response.message[0].quantity)
 											target_row.qty = response.message[0].quantity;
 											target_row.productivity = response.message[0].productivity;
 											target_row.labor_hour = (target_row.uf * target_row.labor_no * target_row.li_permanent * target_row.qty) / target_row.productivity;
@@ -610,7 +611,7 @@ function mainFunction(frm, cdt, cdn) {
 											fields: ["quantity"],
 										},
 										callback: async function(response) {
-											console.log("Response ", response.message[0].quantity)
+											console.log("Responsee ", response.message[0].quantity)
 											target_row.qty = response.message[0].quantity;
 											target_row.total_material = target_row.qty * target_row.material_qty;
 											frm.refresh_field("material1");
@@ -1092,7 +1093,8 @@ frappe.ui.form.on("Monthly Plan Detail", {
 									'parent': frm.doc.operational_plan,
 									'month': parseFloat(month_number)
 								},
-								fields: ['month', 'idx']
+								fields: ['month', 'idx'],
+								limit_page_length: 1000
 							},
 							callback: async function(response) {
 								months = await response.message;
@@ -1109,24 +1111,25 @@ frappe.ui.form.on("Monthly Plan Detail", {
 									'parent': frm.doc.operational_plan,
 
 								},
-								fields: ['*']
+								fields: ['*'],
+								limit_page_length: 1000
 							},
 							callback: async function(response) {
 								var resp = response.message;
-								console.log("response", resp)
+								console.log("responsee fter page limit", resp)
 
 								// Check if idx is not null in months[0]
 								if (months && months.length > 0 && months[0].idx !== null) {
 									// Get the non-null idx value
 									var idxValue = months[0].idx;
-									console.log("index value", idxValue);
+									console.log("index valueeee", idxValue);
 
 									// Filter the resp to get records with matching idx
 									filteredResults = resp.filter(function(item) {
 										return item["m_" + idxValue] !== null;
 									});
 
-									console.log("Filtered results", filteredResults);
+									console.log("Filtered resultss 2 after", filteredResults);
 									source_doc.task_list = [];
 									frm.doc.monthly_plan_detail_week_view = [];
 									//iterate and get the full information of the tasks from the oprational detail plan
