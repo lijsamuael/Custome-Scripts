@@ -30,12 +30,7 @@ frappe.ui.form.on("New Daily Plan Detail", {
 	}
 })
 
-frappe.ui.form.on("New Daily Plan", {
-	fetch: function(frm, cdt, cdn) {
-		ExecuteWeeklyPlanDetail(frm, allActivities, null);
-		frappe.show_alert("Data has been fetched Successfully!")
-	}
-})
+
 
 frappe.ui.form.on('New Daily Plan Detail', {
 	before_daily_plan_detail_remove: function(frm, cdt, cdn) {
@@ -649,243 +644,126 @@ function ExecuteWeeklyPlanDetail(frm, planned_qty) {
 	})
 
 	//crew assgined tasks manipulation
+	console.log("creeeeeeeeeewed tasks", crewed_tasks)
 	$.each(crewed_tasks, function(_i, eMain) {
 
+		console.log("Emain", eMain)
 		var taskParent = eMain.activity;
-		var activity_name = eMain.activity_name;
-
-		// frm.doc.weekly_detail_plan = []
-		// frm.doc.machinery = []
-		// frm.doc.manpower1 = []
-		// frm.doc.material1 = []
-
-		frm.doc.machinery_detail_summerized = []
-		frm.doc.manpower_detail_summerized = []
-		frm.doc.material_detail_summerized = []
-
-
+		var crew_name = eMain.crew_assigned;
 
 		// Check if activity exists in non_payable_weekly_detail_plan
-		var machinery = frm.doc.machinery || [];
+		var machinery_form_crew = frm.doc.machinery_form_crew || [];
 		var machineryExist = false;
 
-		for (var i = 0; i < machinery.length; i++) {
-			if (machinery[i].activity === taskParent) {
+		for (var i = 0; i < machinery_form_crew.length; i++) {
+			if (machinery_form_crew[i].activity === taskParent) {
 				machineryExist = true;
 				break;
 			}
 		}
 
 		if (!machineryExist) {
-			if (taskParent) {
-				frappe.call({
-					method: "erpnext.machinary_populate_api.get_machinary_by_task",
-					args: { parent: taskParent }
-				}).done((r) => {
-					$.each(r.message, function(_i, e) {
-
-						var entry = frm.add_child("machinery");
-						entry.id_mac = e.id_mac;
-						entry.type = e.type;
-						entry.activity = taskParent;
-						entry.uf = e.uf;
-						entry.efficency = e.efficency;
-						entry.rental_rate = e.rental_rate;
-						grand_total_cost_for_machinary += entry.qty * entry.rental_rate;
-						number_of_items_for_machinary += 1;
-						sum_of_unit_rate_for_machinary += entry.rental_rate;
-						entry.total_hourly_cost = entry.qty * entry.rental_rate;
-
-
-						//fetching the quantity from the database
+			frappe.call({
+				method: 'frappe.client.get_list',
+				args: {
+					doctype: 'Crew Equipment',
+					filters: {
+						'parent': crew_name,
+					},
+					fields: ["*"],
+				},
+				callback: async function(response) {
+					console.log("Crew Response", response.message)
+					var resp = response.message;
+					resp && resp.map((item) => {
+						var entry = frm.add_child("machinery_form_crew");
+						entry.crew = crew_name;
+						entry.type = item.type
+						
 						frappe.call({
 							method: 'frappe.client.get_list',
 							args: {
 								doctype: 'Task',
 								filters: {
-									'name': e.parent,
+									'name': taskParent,
 								},
 								fields: ["*"],
 							},
 							callback: async function(response) {
-								console.log("Response ", response.message[0].quantity)
-								entry.qty = response.message[0].quantity;
-								entry.subject = response.message[0].subject;
-								entry.uom = response.message[0].unit;
-								frm.refresh_field("machinery")
+								console.log("Task Response", response.message)
+								entry.subject = response.message[0].subject
+								frm.refresh_field("machinery_form_crew")
+
 
 							}
 						})
 
-
-						var entrySummerized = frm.add_child("machinery_detail_summerized");
-						entrySummerized.id_mac = e.id_mac;
-						entrySummerized.type = e.type;
-						entrySummerized.qty = e.qty * planned_qty;
-						entrySummerized.uf = e.uf;
-						entrySummerized.efficency = e.efficency;
-						entrySummerized.rental_rate = e.rental_rate;
-						entrySummerized.total_hourly_cost = entrySummerized.qty * entrySummerized.rental_rate;
-
 					})
 
-					frm.doc.equipment_total_cost = grand_total_cost_for_machinary;
-					frm.doc.equipment_unit_rate = (sum_of_unit_rate_for_machinary / number_of_items_for_machinary);
+					frm.refresh_field("machinery_form_crew")
 
-					refresh_field("machinery");
-					refresh_field("equipment_total_cost");
-					refresh_field("equipment_unit_rate");
-					refresh_field("machinery_detail_summerized");
-				})
-			}
+				}
+			})
 		}
 
 
 		//Script to populate child tables for manpower
-		var manpower1 = frm.doc.manpower1 || [];
+		var manpower_from_crew = frm.doc.manpower_from_crew || [];
 		var manpowerExist = false;
 
-		for (var i = 0; i < manpower1.length; i++) {
-			if (manpower1[i].activity === taskParent) {
+		for (var i = 0; i < manpower_from_crew.length; i++) {
+			if (manpower_from_crew[i].activity === taskParent) {
 				manpowerExist = true;
 				break;
 			}
 		}
 
 		if (!manpowerExist) {
-			if (taskParent) {
-				frappe.call({
-					method: "erpnext.manpower_populate_api.get_manpower_by_task",
-					args: { parent: taskParent }
-				}).done((r) => {
-					$.each(r.message, function(_i, e) {
-						var entry = frm.add_child("manpower1");
-						entry.id_map = e.id_map;
-						entry.job_title = e.job_title;
-						entry.labor_no = e.mp_number || 1;
-						entry.activity = taskParent;
-						entry.uf = e.uf;
-						entry.efficency = e.efficency;
-						entry.hourly_cost = e.hourly_cost;
-						grand_total_cost_for_manpower += entry.qty * entry.hourly_cost;
-						number_of_items_for_manpower += 1;
-						sum_of_unit_rate_for_manpower += entry.hourly_cost;
-						entry.total_hourly_cost = entry.qty * entry.hourly_cost;
+			frappe.call({
+				method: 'frappe.client.get_list',
+				args: {
+					doctype: 'Crew Manpower',
+					filters: {
+						'parent': crew_name,
+					},
+					fields: ["*"],
+				},
+				callback: async function(response) {
+					console.log("Crew Response", response.message)
+					var resp = response.message;
+					resp && resp.map((item) => {
+						var entry = frm.add_child("manpower_from_crew");
+						entry.crew = crew_name;
+						entry.job_title = item.labor_type
+						entry.labor_no = item.quantity
 
 						frappe.call({
 							method: 'frappe.client.get_list',
 							args: {
 								doctype: 'Task',
 								filters: {
-									'name': e.parent,
+									'name': taskParent,
 								},
 								fields: ["*"],
 							},
 							callback: async function(response) {
-								console.log("Response ", response.message[0].quantity)
-								entry.qty = response.message[0].quantity;
-								entry.subject = response.message[0].subject;
-								frm.refresh_field("manpower1")
+								console.log("Task Response", response.message)
+								entry.subject = response.message[0].subject
+								frm.refresh_field("manpower_from_crew")
+
 
 							}
 						})
 
-
-						var entryMPSummerized = frm.add_child("manpower_detail_summerized");
-						entryMPSummerized.id_map = e.id_map;
-						entryMPSummerized.job_title = e.job_title;
-						entryMPSummerized.qty = e.qty * planned_qty;
-						entryMPSummerized.uf = e.uf;
-						entryMPSummerized.efficency = e.efficency;
-						entryMPSummerized.hourly_cost = e.hourly_cost;
-						entryMPSummerized.total_hourly_cost = entryMPSummerized.qty * entryMPSummerized.hourly_cost;
 					})
 
+					frm.refresh_field("manpower_from_crew")
 
-					frm.doc.man_power_total_cost = grand_total_cost_for_manpower;
-					frm.doc.man_power_unit_rate = (sum_of_unit_rate_for_manpower / number_of_items_for_manpower);
-
-					refresh_field("manpower1");
-					refresh_field("man_power_total_cost");
-					refresh_field("man_power_unit_rate");
-					refresh_field("manpower_detail_summerized");
-				})
-			}
+				}
+			})
 		}
 
 
-		//Script to populate child tables for material
-		var material1 = frm.doc.material1 || [];
-		var materialExist = false;
-
-		for (var i = 0; i < material1.length; i++) {
-			if (material1[i].activity === taskParent) {
-				materialExist = true;
-				break;
-			}
-		}
-
-		if (!materialExist) {
-			if (taskParent) {
-				frappe.call({
-
-					method: "erpnext.material_populate_api.get_material_by_task",
-					args: { parent: taskParent }
-
-				}).done((r) => {
-					$.each(r.message, function(_i, e) {
-
-						var entry = frm.add_child("material1");
-						entry.id_mat = e.id_mat;
-						entry.item1 = e.item1;
-						entry.activity = taskParent;
-						entry.uom = e.uom;
-						entry.uf = e.uf;
-						entry.efficency = e.efficency;
-						entry.unit_price = e.unit_price;
-						grand_total_cost_for_material += entry.qty * entry.unit_price;
-						number_of_items_for_material += 1;
-						sum_of_unit_rate_for_material += entry.unit_price;
-						entry.total_cost = entry.qty * entry.unit_price;
-
-						frappe.call({
-							method: 'frappe.client.get_list',
-							args: {
-								doctype: 'Task',
-								filters: {
-									'name': e.parent,
-								},
-								fields: ["*"],
-							},
-							callback: async function(response) {
-								console.log("Response ", response.message[0].quantity)
-								entry.qty = response.message[0].quantity;
-								entry.subject = response.message[0].subject;
-								frm.refresh_field("material1")
-
-							}
-						})
-
-						var entryMaterialSummerized = frm.add_child("material_detail_summerized");
-						entryMaterialSummerized.id_mat = e.id_mat;
-						entryMaterialSummerized.item1 = e.item1;
-						entryMaterialSummerized.uom = e.uom;
-						entryMaterialSummerized.qty = e.qty * planned_qty;
-						entryMaterialSummerized.uf = e.uf;
-						entryMaterialSummerized.efficency = e.efficency;
-						entryMaterialSummerized.unit_price = e.unit_price;
-						entryMaterialSummerized.total_cost = entryMaterialSummerized.qty * entryMaterialSummerized.unit_price;
-					})
-
-					frm.doc.material_total_cost = grand_total_cost_for_material;
-					//frm.doc.man_power_unit_rate = (sum_of_unit_rate/number_of_items);
-
-					refresh_field("material1");
-					refresh_field("material_total_cost");
-					refresh_field("material_detail_summerized");
-				})
-			}
-		}
 
 	})
 	

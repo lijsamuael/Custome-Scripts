@@ -10,6 +10,7 @@ cur_frm.add_fetch('activity_id', 'productivity', 'productivity');
 // cur_frm.add_fetch('activity_id', 'quantity', 'planned_qty');
 
 var week_value;
+var flattenedArray;
 
 function addDays(date, days) {
 	var result = new Date(date);
@@ -124,6 +125,7 @@ frappe.ui.form.on("Weekly Plan", {
 	monthly_plan: function(frm, cdt, cdn) {
 
 		var d = locals[cdt][cdn];
+		
 		if (frm.doc.monthly_plan) {
 			frm.clear_table('weekly_plan_detail_master');
 			frappe.call({
@@ -203,7 +205,83 @@ frappe.ui.form.on("Weekly Plan", {
 						}
 					})
 
+					//get the previous non performed quantity
+					var filters = {
+						monthly_plan: frm.doc.monthly_plan
+					}
 
+					filters.week = frm.doc.week === "Week Two" ? "Week One" :
+						frm.doc.week === "Week Three" ? "Week Two" :
+							frm.doc.week === "Week Four" ? "Week Three" :
+									null;
+
+					console.log("the value of the filters", filters)
+
+					const startTime = performance.now();
+					
+					if(filters.week){
+						await frappe.call({
+							method: 'frappe.client.get_list',
+							args: {
+								doctype: 'Weekly Plan',
+								filters: filters,
+								fields:['name']
+							},
+							callback: async function(response){
+								console.log("response of previous non performed quantity", response.message)
+								var previoius_week_plan = response.message[0];
+
+								frappe.call({
+									method: 'frappe.client.get_list',
+									args: {
+										doctype: 'New Daily Plan',
+										filters: {
+											weekly_plan: previoius_week_plan
+										},
+										fields:['name']
+									},
+									callback: async function(response){
+										console.log("from the daily plan response", response.message)
+										var previous_daily_plans = response.message;
+
+										var newDailyPlanDetails = [];
+
+										for (var i = 0; i < previous_daily_plans.length; i++) {
+											var dailyPlanName = previous_daily_plans[i].name;
+
+											await frappe.call({
+												method: 'frappe.client.get_list',
+												args: {
+													doctype: 'New Daily Plan Detail',
+													filters: {
+														parent: dailyPlanName
+													},
+													fields: ['*'] // Replace with actual field names
+												},
+												callback: function(response) {
+													var dailyPlanDetails = response.message;
+													newDailyPlanDetails.push(dailyPlanDetails);
+												}
+											});
+										}
+
+
+										console.log("Newly created variable with daily plan details:", newDailyPlanDetails);
+										flattenedArray = [].concat.apply([], newDailyPlanDetails);
+										console.log("Flattned arrays:", flattenedArray);
+
+
+									}
+								})
+
+
+
+							}
+						})
+					}
+
+					const endTime = performance.now();
+					const executionTime = endTime - startTime;
 
 
 					var activities = [];
@@ -213,7 +291,11 @@ frappe.ui.form.on("Weekly Plan", {
 						}
 					})
 
-					MPAutoPopulate(frm, activities, null);
+					// Use setTimeout to call WPAutoPopulate after one second plus the execution time
+					setTimeout(function() {
+						MPAutoPopulate(frm, activities, null);
+					}, executionTime + 1000); // Add one second (1000 milliseconds)
+
 				}
 			})
 			frappe.model.with_doc('Monthly Plan', frm.doc.monthly_plan, function() {
@@ -377,7 +459,19 @@ function MPAutoPopulate(frm, mp_activites, planned_this_week) {
 		target_row.activity_name = mp_activity.subject;
 		target_row.uom = mp_activity.uom;
 		console.log("week value", week_value)
+		console.log("can i get the flatted array also please", flattenedArray)
+		var previous_total = 0;
+		flattenedArray && flattenedArray.map((item) => {
+			if (item.activity == mp_activity.activity) {
+				previous_total = (item.planned_qty - item.executed_qty);
+			}
+		
+		})
+		target_row.previous_non_performed_qty = previous_total;
+		console.log("previous_non_perfomrmed_qty", previous_total)
 		target_row.planned_this_week = mp_activity["w_" + week_value]
+		target_row.total_planned = (target_row.previous_non_performed_qty || 0) + (target_row.planned_this_week || 0)
+		
 		console.log("mp activities", mp_activity)
 		//fetching the quantity from the database
 		frappe.call({
@@ -757,7 +851,7 @@ function ExecuteWeeklyPlanDetail(frm, planned_this_week) {
 
 					for (var j = 0; j < frm.doc.weekly_plan_detail_master.length; j++) {
 						if (frm.doc.weekly_plan_detail_master[j].activity === taskParent) {
-							entry.planned_this_week = frm.doc.weekly_plan_detail_master[j].planned_this_week;
+							entry.planned_this_week = frm.doc.weekly_plan_detail_master[j].total_planned;
 							break; // Once a match is found, no need to continue searching
 						}
 					}
