@@ -380,11 +380,7 @@ function ExecuteWeeklyPlanDetail(frm, planned_qty) {
 	var number_of_items_for_material = 0;
 	var sum_of_unit_rate_for_material = 0;
 
-	var task_lists = frm.doc.daily_plan_detail.filter((item) => {
-		if(!item.crew_assigned){
-			return item;
-		}
-	});
+	var task_lists = frm.doc.daily_plan_detail
 
 	var crewed_tasks = frm.doc.daily_plan_detail.filter((item) => {
 		if(item.crew_assigned){
@@ -392,8 +388,16 @@ function ExecuteWeeklyPlanDetail(frm, planned_qty) {
 		}
 	});
 
+	var contrated_tasks = frm.doc.daily_plan_detail.filter((item) => {
+		if(item.scontract_assigned){
+			return item;
+		}
+	});
+
 	console.log("non crew assinged task lists", task_lists);
 	console.log("crew assinged task lists", crewed_tasks);
+	console.log("sub contract assigned task lists", contrated_tasks);
+
 
 
 	var allMachinesMap = new Map();
@@ -410,7 +414,7 @@ function ExecuteWeeklyPlanDetail(frm, planned_qty) {
 
 	//fetch the material machinery and manpower detail for tasks that crew is not assigned
 	$.each(task_lists, function(_i, eMain) {
-
+		console.log("eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee")
 		var taskParent = eMain.activity;
 		var activity_name = eMain.activity_name;
 
@@ -580,7 +584,7 @@ function ExecuteWeeklyPlanDetail(frm, planned_qty) {
 				break;
 			}
 		}
-
+			console.log("is there a problem there:")
 			if (taskParent) {
 				frappe.call({
 
@@ -613,7 +617,7 @@ function ExecuteWeeklyPlanDetail(frm, planned_qty) {
 								fields: ["*"],
 							},
 							callback: async function(response) {
-								console.log("Response ", response.message[0].quantity)
+								console.log("Response for maaterial ", response.message[0].quantity)
 								entry.qty = response.message[0].quantity;
 								entry.subject = response.message[0].subject;
 								frm.refresh_field("material1")
@@ -758,6 +762,79 @@ function ExecuteWeeklyPlanDetail(frm, planned_qty) {
 					})
 
 					frm.refresh_field("manpower_from_crew")
+
+				}
+			})
+		}
+
+
+
+	})
+
+
+
+
+
+	//sub contract assigned task manipulation
+	$.each(contrated_tasks, function(_i, eMain) {
+
+		console.log("Emain", eMain)
+		var taskParent = eMain.activity;
+		var sc_name = eMain.scontract_assigned;
+
+
+
+		//Script to populate child tables for manpower
+		var new_daily_subcontract_manpower_detail = frm.doc.new_daily_subcontract_manpower_detail || [];
+		var manpowerExist = false;
+
+		for (var i = 0; i < new_daily_subcontract_manpower_detail.length; i++) {
+			if (new_daily_subcontract_manpower_detail[i].activity === taskParent) {
+				manpowerExist = true;
+				break;
+			}
+		}
+
+		if (!manpowerExist) {
+			frappe.call({
+				method: 'frappe.client.get_list',
+				args: {
+					doctype: 'Sub Contract Manpower',
+					filters: {
+						'parent': sc_name,
+					},
+					fields: ["*"],
+				},
+				callback: async function(response) {
+					console.log("Sub Contract Response", response.message)
+					var resp = response.message;
+					resp && resp.map((item) => {
+						var entry = frm.add_child("new_daily_subcontract_manpower_detail");
+						entry.sub_contract = sc_name;
+						entry.labor_name = item.labor_type
+						entry.labor_no = item.quantity
+
+						frappe.call({
+							method: 'frappe.client.get_list',
+							args: {
+								doctype: 'Task',
+								filters: {
+									'name': taskParent,
+								},
+								fields: ["*"],
+							},
+							callback: async function(response) {
+								console.log("Task Response", response.message)
+								entry.task_name = response.message[0].subject
+								frm.refresh_field("new_daily_subcontract_manpower_detail")
+
+
+							}
+						})
+
+					})
+
+					frm.refresh_field("new_daily_subcontract_manpower_detail")
 
 				}
 			})

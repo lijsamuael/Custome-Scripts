@@ -160,7 +160,7 @@ function deleteRow(frm, removed_activity, childTable) {
 frappe.ui.form.on("Operational Plan", {
 	end_date: function(frm, cdt, cdn) {
 		if (frm.doc.start_date && frm.doc.end_date) {
-			frm.operational_plan_months_date_data = [];
+			frm.doc.operational_plan_months_date_data = [];
 			var start_date = frm.doc.start_date;
 			var end_date = frm.doc.end_date;
 

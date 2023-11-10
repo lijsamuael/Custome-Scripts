@@ -19,23 +19,23 @@ function addDays(date, days) {
 }
 
 frappe.ui.form.on('Weekly detail plan', {
-	d_1: function(frm, cdt, cdn){
+	d_1: function(frm, cdt, cdn) {
 		prohobitUpperSum1(frm, cdt, cdn, "d_1")
 	},
-	d_2: function(frm, cdt, cdn){
+	d_2: function(frm, cdt, cdn) {
 		prohobitUpperSum1(frm, cdt, cdn, "d_2")
 	},
-	d_3: function(frm, cdt, cdn){
+	d_3: function(frm, cdt, cdn) {
 		prohobitUpperSum1(frm, cdt, cdn, "d_3")
 	},
-	d_4: function(frm, cdt, cdn){
+	d_4: function(frm, cdt, cdn) {
 		prohobitUpperSum1(frm, cdt, cdn, "d_4")
 	},
-	
-	d_5: function(frm, cdt, cdn){
+
+	d_5: function(frm, cdt, cdn) {
 		prohobitUpperSum1(frm, cdt, cdn, "d_5")
 	},
-	d_6: function(frm, cdt, cdn){
+	d_6: function(frm, cdt, cdn) {
 		prohobitUpperSum1(frm, cdt, cdn, "d_6")
 	},
 })
@@ -56,7 +56,7 @@ function prohobitUpperSum1(frm, cdt, cdn, month) {
 
 	console.log("total sum", total);
 
-	if(total > row.planned_this_week){
+	if (total > row.planned_this_week) {
 		row[month] = null;
 		frm.refresh_field("weekly_detail_plan")
 		frappe.show_alert("Each day sum should be lower than the planned")
@@ -72,23 +72,41 @@ frappe.ui.form.on("Weekly Plan", {
 				"filters": {
 					"project": frm.doc.project,
 					"task_type": "Non Payable"
-					
+
 				}
 			}
 		});
 	}
 });
 
+frappe.ui.form.on("Weekly Plan", {
+	onload: function(frm, cdt, cdn) {
+		if(frm.doc.project){
+			var d = locals[cdt][cdn];
+			console.log("d", d)
+			frm.set_query("activity_id", "weekly_non_payable_tasks", function() {
+				return {
+					"filters": {
+						"project": frm.doc.project,
+						"task_type": "Non Payable"
+
+					}
+				}
+			});
+		}
+	}
+});
+
 
 frappe.ui.form.on("Weekly Plan", {
-	 monthly_plan: function(frm, cdt, cdn) {
-		if(!frm.doc.week){
+	monthly_plan: function(frm, cdt, cdn) {
+		if (!frm.doc.week) {
 			frm.doc.monthly_plan = null;
 			frm.refresh_field("monthly_plan")
 			frappe.show_alert("Please Select Month First")
 		}
-	 }
- });
+	}
+});
 
 
 frappe.ui.form.on("Weekly Plan", {
@@ -125,7 +143,7 @@ frappe.ui.form.on("Weekly Plan", {
 	monthly_plan: function(frm, cdt, cdn) {
 
 		var d = locals[cdt][cdn];
-		
+
 		if (frm.doc.monthly_plan) {
 			frm.clear_table('weekly_plan_detail_master');
 			frappe.call({
@@ -213,21 +231,21 @@ frappe.ui.form.on("Weekly Plan", {
 					filters.week = frm.doc.week === "Week Two" ? "Week One" :
 						frm.doc.week === "Week Three" ? "Week Two" :
 							frm.doc.week === "Week Four" ? "Week Three" :
-									null;
+								null;
 
 					console.log("the value of the filters", filters)
 
 					const startTime = performance.now();
-					
-					if(filters.week){
+
+					if (filters.week) {
 						await frappe.call({
 							method: 'frappe.client.get_list',
 							args: {
 								doctype: 'Weekly Plan',
 								filters: filters,
-								fields:['name']
+								fields: ['name']
 							},
-							callback: async function(response){
+							callback: async function(response) {
 								console.log("response of previous non performed quantity", response.message)
 								var previoius_week_plan = response.message[0];
 
@@ -238,9 +256,9 @@ frappe.ui.form.on("Weekly Plan", {
 										filters: {
 											weekly_plan: previoius_week_plan
 										},
-										fields:['name']
+										fields: ['name']
 									},
-									callback: async function(response){
+									callback: async function(response) {
 										console.log("from the daily plan response", response.message)
 										var previous_daily_plans = response.message;
 
@@ -345,34 +363,34 @@ frappe.ui.form.on("Weekly detail plan", {
 
 frappe.ui.form.on("Non Payable Weekly Detail Plan", {
 	d_1: function(frm, cdt, cdn) {
-			assignMachineryWeekNonpayable(frm, cdt, cdn, "d_1");
-			assignManpowerWeekNonpayable(frm, cdt, cdn, "d_1");
-			assignMaterialWeekNonpayable(frm, cdt, cdn, "d_1");
+		assignMachineryWeekNonpayable(frm, cdt, cdn, "d_1");
+		assignManpowerWeekNonpayable(frm, cdt, cdn, "d_1");
+		assignMaterialWeekNonpayable(frm, cdt, cdn, "d_1");
 	},
 	d_2: function(frm, cdt, cdn) {
-			assignMachineryWeekNonpayable(frm, cdt, cdn, "d_2");
-			assignManpowerWeekNonpayable(frm, cdt, cdn, "d_2");
-			assignMaterialWeekNonpayable(frm, cdt, cdn, "d_2");
+		assignMachineryWeekNonpayable(frm, cdt, cdn, "d_2");
+		assignManpowerWeekNonpayable(frm, cdt, cdn, "d_2");
+		assignMaterialWeekNonpayable(frm, cdt, cdn, "d_2");
 	},
 	d_3: function(frm, cdt, cdn) {
-			assignMachineryWeekNonpayable(frm, cdt, cdn, "d_3");
-			assignManpowerWeekNonpayable(frm, cdt, cdn, "d_3");
-			assignMaterialWeekNonpayable(frm, cdt, cdn, "d_3");
+		assignMachineryWeekNonpayable(frm, cdt, cdn, "d_3");
+		assignManpowerWeekNonpayable(frm, cdt, cdn, "d_3");
+		assignMaterialWeekNonpayable(frm, cdt, cdn, "d_3");
 	},
 	d_4: function(frm, cdt, cdn) {
-			assignMachineryWeekNonpayable(frm, cdt, cdn, "d_4");
-			assignManpowerWeekNonpayable(frm, cdt, cdn, "d_4");
-			assignMaterialWeekNonpayable(frm, cdt, cdn, "d_4");
+		assignMachineryWeekNonpayable(frm, cdt, cdn, "d_4");
+		assignManpowerWeekNonpayable(frm, cdt, cdn, "d_4");
+		assignMaterialWeekNonpayable(frm, cdt, cdn, "d_4");
 	},
 	d_5: function(frm, cdt, cdn) {
-			assignMachineryWeekNonpayable(frm, cdt, cdn, "d_5");
-			assignManpowerWeekNonpayable(frm, cdt, cdn, "d_5");
-			assignMaterialWeekNonpayable(frm, cdt, cdn, "d_5");
+		assignMachineryWeekNonpayable(frm, cdt, cdn, "d_5");
+		assignManpowerWeekNonpayable(frm, cdt, cdn, "d_5");
+		assignMaterialWeekNonpayable(frm, cdt, cdn, "d_5");
 	},
 	d_6: function(frm, cdt, cdn) {
-			assignMachineryWeekNonpayable(frm, cdt, cdn, "d_6");
-			assignManpowerWeekNonpayable(frm, cdt, cdn, "d_6");
-			assignMaterialWeekNonpayable(frm, cdt, cdn, "d_6");
+		assignMachineryWeekNonpayable(frm, cdt, cdn, "d_6");
+		assignManpowerWeekNonpayable(frm, cdt, cdn, "d_6");
+		assignMaterialWeekNonpayable(frm, cdt, cdn, "d_6");
 	}
 });
 
@@ -465,13 +483,13 @@ function MPAutoPopulate(frm, mp_activites, planned_this_week) {
 			if (item.activity == mp_activity.activity) {
 				previous_total = (item.planned_qty - item.executed_qty);
 			}
-		
+
 		})
 		target_row.previous_non_performed_qty = previous_total;
 		console.log("previous_non_perfomrmed_qty", previous_total)
 		target_row.planned_this_week = mp_activity["w_" + week_value]
 		target_row.total_planned = (target_row.previous_non_performed_qty || 0) + (target_row.planned_this_week || 0)
-		
+
 		console.log("mp activities", mp_activity)
 		//fetching the quantity from the database
 		frappe.call({
@@ -577,7 +595,7 @@ function ExecuteWeeklyPlanDetail(frm, planned_this_week) {
 		frm.doc.weekly_material_detail_plan_by_day = [];
 
 
-
+		console.log("the task parent is the following ...............", taskParent)
 		if (taskParent) {
 			frappe.call({
 				method: "erpnext.machinary_populate_api.get_machinary_by_task",
@@ -836,45 +854,45 @@ function ExecuteWeeklyPlanDetail(frm, planned_this_week) {
 		}
 
 		//Script to populate child tables for task detail by week
-		if (taskParent) {
+		// if (taskParent) {
 
-			frappe.call({
+		// 	frappe.call({
 
-				method: "erpnext.task_week_detail_populate_api.get_task_by_task_id",
-				args: { activity: taskParent }
+		// 		method: "erpnext.task_week_detail_populate_api.get_task_by_task_id",
+		// 		args: { activity: taskParent }
 
-			}).done((r) => {
-				$.each(r.message, function(_i, e) {
+		// 	}).done((r) => {
+		// 		$.each(r.message, function(_i, e) {
 
-					var entry = frm.add_child("weekly_detail_plan");
-					entry.activity = taskParent;
+		// 			var entry = frm.add_child("weekly_detail_plan");
+		// 			entry.activity = taskParent;
 
-					for (var j = 0; j < frm.doc.weekly_plan_detail_master.length; j++) {
-						if (frm.doc.weekly_plan_detail_master[j].activity === taskParent) {
-							entry.planned_this_week = frm.doc.weekly_plan_detail_master[j].total_planned;
-							break; // Once a match is found, no need to continue searching
-						}
-					}
-					entry.subject = activity_name;
-					entry.uom = e[61];
+		// 			for (var j = 0; j < frm.doc.weekly_plan_detail_master.length; j++) {
+		// 				if (frm.doc.weekly_plan_detail_master[j].activity === taskParent) {
+		// 					entry.planned_this_week = frm.doc.weekly_plan_detail_master[j].total_planned;
+		// 					break; // Once a match is found, no need to continue searching
+		// 				}
+		// 			}
+		// 			entry.subject = activity_name;
+		// 			entry.uom = e[61];
 
-					//console.log("WAHHHHHATTAHHHAHAHHA?");
+		// 			//console.log("WAHHHHHATTAHHHAHAHHA?");
 
-					if (planned_this_week) {
-						entry.planned_this_week = planned_this_week;
-						entry.d_1 = planned_this_week / 6;
-						entry.d_2 = planned_this_week / 6;
-						entry.d_3 = planned_this_week / 6;
-						entry.d_4 = planned_this_week / 6;
-						entry.d_5 = planned_this_week / 6;
-						entry.d_6 = planned_this_week / 6;
-					}
+		// 			if (planned_this_week) {
+		// 				entry.planned_this_week = planned_this_week;
+		// 				entry.d_1 = planned_this_week / 6;
+		// 				entry.d_2 = planned_this_week / 6;
+		// 				entry.d_3 = planned_this_week / 6;
+		// 				entry.d_4 = planned_this_week / 6;
+		// 				entry.d_5 = planned_this_week / 6;
+		// 				entry.d_6 = planned_this_week / 6;
+		// 			}
 
-				})
+		// 		})
 
-				refresh_field("weekly_detail_plan");
-			})
-		}
+		// 		refresh_field("weekly_detail_plan");
+		// 	})
+		// }
 
 		//Script to populate child tables for task detail by week
 		// if (taskParent) {
@@ -945,8 +963,16 @@ frappe.ui.form.on("Weekly detail plan", {
 //fetching for the bill of quantity other than the previous values
 frappe.ui.form.on("Weekly Non Payable Tasks", {
 	activity_id: function(frm, cdt, cdn) {
-		AutoPopulate(frm, cdt, cdn);
+		var row = locals[cdt][cdn];
+		if(row.activity_id){
+			AutoPopulate(frm, cdt, cdn);
+		} else {
+			console.log("else");
+			frappe.model.clear_doc(cdt, cdn);
+			frm.refresh_field("weekly_non_payable_tasks");
+		}
 	},
+
 	planned_qty: function(frm, cdt, cdn) {
 		var row = locals[cdt][cdn];
 		var detailTable = frm.doc.non_payable_weekly_detail_plan;
@@ -969,7 +995,7 @@ frappe.ui.form.on("Weekly Non Payable Tasks", {
 	}
 });
 
-function AutoPopulate(frm, cdt, cdn) {``
+function AutoPopulate(frm, cdt, cdn) {
 
 	var d = locals[cdt][cdn];
 	var activity = frappe.model.get_value(d.doctype, d.name, "activity_id");
@@ -1006,109 +1032,112 @@ function AutoPopulate(frm, cdt, cdn) {``
 		}
 		console.log("abebe beso libela")
 
-		// auto assign the machinary table
-		frappe.call({
-			method: "erpnext.machinary_populate_api.get_machinary_by_task",
-			args: { parent: taskParent }
-		}).done((r) => {
-			$.each(r.message, function(_i, e) {
-				console.log("abebe beso bela", e)
+		console.log("the value of the task parent for the non payables is the following...........", taskParent);
+		if (taskParent) {
+			// auto assign the machinary table
+			frappe.call({
+				method: "erpnext.machinary_populate_api.get_machinary_by_task",
+				args: { parent: taskParent }
+			}).done((r) => {
+				$.each(r.message, function(_i, e) {
+					console.log("abebe beso bela", e)
 
-				// Check if activity exists in non_payable_weekly_machinery_detail_plan_by_day
-				var non_payable_weekly_machinery_detail_plan_by_day = frm.doc.non_payable_weekly_machinery_detail_plan_by_day || [];
-				var machineryPlanExists = false;
+					// Check if activity exists in non_payable_weekly_machinery_detail_plan_by_day
+					var non_payable_weekly_machinery_detail_plan_by_day = frm.doc.non_payable_weekly_machinery_detail_plan_by_day || [];
+					var machineryPlanExists = false;
 
-				for (var i = 0; i < non_payable_weekly_machinery_detail_plan_by_day.length; i++) {
-					if (non_payable_weekly_machinery_detail_plan_by_day[i].machinery_type === e.type) {
-						machineryPlanExists = true;
-						break;
+					for (var i = 0; i < non_payable_weekly_machinery_detail_plan_by_day.length; i++) {
+						if (non_payable_weekly_machinery_detail_plan_by_day[i].machinery_type === e.type) {
+							machineryPlanExists = true;
+							break;
+						}
 					}
-				}
 
-				console.log("machinery exists", machineryPlanExists)
+					console.log("machinery exists", machineryPlanExists)
 
-				if (!machineryPlanExists) {
-					var entry = frm.add_child("non_payable_weekly_machinery_detail_plan_by_day");
-					entry.id = e.id_mac;
-					entry.machinery_type = e.type;
-					entry.eff = e.efficency;
-					entry.uf = e.uf;
-					entry.material_no = e.qty;
-					entry.task = taskParent;
-				}
+					if (!machineryPlanExists) {
+						var entry = frm.add_child("non_payable_weekly_machinery_detail_plan_by_day");
+						entry.id = e.id_mac;
+						entry.machinery_type = e.type;
+						entry.eff = e.efficency;
+						entry.uf = e.uf;
+						entry.material_no = e.qty;
+						entry.task = taskParent;
+					}
+				});
+
+				frm.refresh_field("non_payable_weekly_machinery_detail_plan_by_day");
 			});
 
-			frm.refresh_field("non_payable_weekly_machinery_detail_plan_by_day");
-		});
 
 
+			// Script to populate child tables for manpower
+			frappe.call({
+				method: "erpnext.manpower_populate_api.get_manpower_by_task",
+				args: { parent: taskParent }
+			}).done((r) => {
+				$.each(r.message, function(_i, e) {
+					console.log("abebe beso bela", e)
+					// Check if activity exists in non_payable_weekly_manpower_detail_plan_by_day
+					var non_payable_weekly_manpower_detail_plan_by_day = frm.doc.non_payable_weekly_manpower_detail_plan_by_day || [];
+					var manpowerPlanExists = false;
 
-		// Script to populate child tables for manpower
-		frappe.call({
-			method: "erpnext.manpower_populate_api.get_manpower_by_task",
-			args: { parent: taskParent }
-		}).done((r) => {
-			$.each(r.message, function(_i, e) {
-				console.log("abebe beso bela", e)
-				// Check if activity exists in non_payable_weekly_manpower_detail_plan_by_day
-				var non_payable_weekly_manpower_detail_plan_by_day = frm.doc.non_payable_weekly_manpower_detail_plan_by_day || [];
-				var manpowerPlanExists = false;
-
-				for (var i = 0; i < non_payable_weekly_manpower_detail_plan_by_day.length; i++) {
-					if (non_payable_weekly_manpower_detail_plan_by_day[i].labor_type === e.job_title) {
-						manpowerPlanExists = true;
-						break;
+					for (var i = 0; i < non_payable_weekly_manpower_detail_plan_by_day.length; i++) {
+						if (non_payable_weekly_manpower_detail_plan_by_day[i].labor_type === e.job_title) {
+							manpowerPlanExists = true;
+							break;
+						}
 					}
-				}
-				console.log("manpower exist", manpowerPlanExists)
+					console.log("manpower exist", manpowerPlanExists)
 
-				if (!manpowerPlanExists) {
-					var entry = frm.add_child("non_payable_weekly_manpower_detail_plan_by_day");
-					entry.id = e.id_map;
-					entry.labor_type = e.job_title;
-					entry.li_permanent = e.li_permanent;
-					entry.labor_no = e.no_of_labor;
-					entry.uf = e.uf;
-					entry.task = taskParent;
-				}
-				frm.refresh_field("non_payable_weekly_manpower_detail_plan_by_day");
-
-			})
-		})
-
-		// Script to populate child tables for material
-		frappe.call({
-			method: "erpnext.material_populate_api.get_material_by_task",
-			args: { parent: taskParent }
-		}).done((r) => {
-			$.each(r.message, function(_i, e) {
-				console.log("abebe beso bela", e)
-
-				// Check if activity exists in non_payable_weekly_material_detail_plan_by_day
-				var non_payable_weekly_material_detail_plan_by_day = frm.doc.non_payable_weekly_material_detail_plan_by_day || [];
-				var materialPlanExists = false;
-
-				for (var i = 0; i < non_payable_weekly_material_detail_plan_by_day.length; i++) {
-					if (non_payable_weekly_material_detail_plan_by_day[i].material_name === e.item1) {
-						materialPlanExists = true;
-						break;
+					if (!manpowerPlanExists) {
+						var entry = frm.add_child("non_payable_weekly_manpower_detail_plan_by_day");
+						entry.id = e.id_map;
+						entry.labor_type = e.job_title;
+						entry.li_permanent = e.li_permanent;
+						entry.labor_no = e.no_of_labor;
+						entry.uf = e.uf;
+						entry.task = taskParent;
 					}
-				}
-				console.log("material exist", materialPlanExists)
+					frm.refresh_field("non_payable_weekly_manpower_detail_plan_by_day");
 
-
-				if (!materialPlanExists) {
-					var entry = frm.add_child("non_payable_weekly_material_detail_plan_by_day");
-					entry.id = e.id_mat;
-					entry.material_name = e.item1;
-					entry.material_qty = e.qty;
-
-					entry.task = taskParent;
-				}
-				frm.refresh_field("non_payable_weekly_material_detail_plan_by_day");
-
+				})
 			})
-		})
+
+			// Script to populate child tables for material
+			frappe.call({
+				method: "erpnext.material_populate_api.get_material_by_task",
+				args: { parent: taskParent }
+			}).done((r) => {
+				$.each(r.message, function(_i, e) {
+					console.log("abebe beso bela", e)
+
+					// Check if activity exists in non_payable_weekly_material_detail_plan_by_day
+					var non_payable_weekly_material_detail_plan_by_day = frm.doc.non_payable_weekly_material_detail_plan_by_day || [];
+					var materialPlanExists = false;
+
+					for (var i = 0; i < non_payable_weekly_material_detail_plan_by_day.length; i++) {
+						if (non_payable_weekly_material_detail_plan_by_day[i].material_name === e.item1) {
+							materialPlanExists = true;
+							break;
+						}
+					}
+					console.log("material exist", materialPlanExists)
+
+
+					if (!materialPlanExists) {
+						var entry = frm.add_child("non_payable_weekly_material_detail_plan_by_day");
+						entry.id = e.id_mat;
+						entry.material_name = e.item1;
+						entry.material_qty = e.qty;
+
+						entry.task = taskParent;
+					}
+					frm.refresh_field("non_payable_weekly_material_detail_plan_by_day");
+
+				})
+			})
+		}
 
 
 		//assign to the machinery detail
@@ -1118,54 +1147,56 @@ function AutoPopulate(frm, cdt, cdn) {``
 
 		for (var i = 0; i < non_payable_weekly_plan_machinery_detail.length; i++) {
 			if (non_payable_weekly_plan_machinery_detail[i].activity === taskParent) {
-					detailMachineryPlanExists = true;
+				detailMachineryPlanExists = true;
 				break;
 			}
 		}
 
-		if (!detailMachineryPlanExists) {
-			frappe.call({
-				method: "erpnext.machinary_populate_api.get_machinary_by_task",
-				args: { parent: taskParent }
-			}).done((r) => {
-				$.each(r.message, function(_i, e) {
+		if(taskParent){
+			if (!detailMachineryPlanExists) {
+				frappe.call({
+					method: "erpnext.machinary_populate_api.get_machinary_by_task",
+					args: { parent: taskParent }
+				}).done((r) => {
+					$.each(r.message, function(_i, e) {
 
-					var entry = frm.add_child("non_payable_weekly_plan_machinery_detail");
-					entry.id_mac = e.id_mac;
-					entry.type = e.type;
-					entry.activity = taskParent;
-					entry.equp_no = e.qty;
-					entry.subject = e.subject;
+						var entry = frm.add_child("non_payable_weekly_plan_machinery_detail");
+						entry.id_mac = e.id_mac;
+						entry.type = e.type;
+						entry.activity = taskParent;
+						entry.equp_no = e.qty;
+						entry.subject = e.subject;
 
-					//fetching the quantity from the database
-					frappe.call({
-						method: 'frappe.client.get_list',
-						args: {
-							doctype: 'Task',
-							filters: {
-								'name': e.parent,
+						//fetching the quantity from the database
+						frappe.call({
+							method: 'frappe.client.get_list',
+							args: {
+								doctype: 'Task',
+								filters: {
+									'name': e.parent,
+								},
+								fields: ["quantity", "productivity"],
 							},
-							fields: ["quantity", "productivity"],
-						},
-						callback: async function(response) {
-							console.log("Response ", response.message[0].quantity)
-							entry.qty = response.message[0].quantity;
-							entry.productivity = response.message[0].productivity;
+							callback: async function(response) {
+								console.log("Response ", response.message[0].quantity)
+								entry.qty = response.message[0].quantity;
+								entry.productivity = response.message[0].productivity;
 
-							entry.uf = e.uf;
-							entry.efficency = e.efficency;
-							entry.rental_rate = e.rental_rate;
-							entry.total_hourly_cost = entry.qty * entry.rental_rate;
-							entry.machinery_cost = entry.total_hourly_cost / entry.productivity
-							console.log("uf ", entry.uf, "eff ", entry.efficency, "qty ", entry.qty, "item no ", entry.item_no, "prod", entry.productivity)
-							entry.equp_hour = (entry.uf * entry.efficency * entry.qty * entry.equp_no) / entry.productivity;
-							frm.refresh_field("non_payable_weekly_plan_machinery_detail")
+								entry.uf = e.uf;
+								entry.efficency = e.efficency;
+								entry.rental_rate = e.rental_rate;
+								entry.total_hourly_cost = entry.qty * entry.rental_rate;
+								entry.machinery_cost = entry.total_hourly_cost / entry.productivity
+								console.log("uf ", entry.uf, "eff ", entry.efficency, "qty ", entry.qty, "item no ", entry.item_no, "prod", entry.productivity)
+								entry.equp_hour = (entry.uf * entry.efficency * entry.qty * entry.equp_no) / entry.productivity;
+								frm.refresh_field("non_payable_weekly_plan_machinery_detail")
 
-						}
+							}
+						})
+
 					})
-
 				})
-			})
+			}
 		}
 
 
@@ -1176,56 +1207,58 @@ function AutoPopulate(frm, cdt, cdn) {``
 
 		for (var i = 0; i < non_payable_weekly_plan_manpower_detail.length; i++) {
 			if (non_payable_weekly_plan_manpower_detail[i].activity === taskParent) {
-						detailManpowerPlanExists = true;
+				detailManpowerPlanExists = true;
 				break;
 			}
 		}
 
-		if (!detailManpowerPlanExists) {
-			frappe.call({
-				method: "erpnext.manpower_populate_api.get_manpower_by_task",
-				args: { parent: taskParent }
-			}).done((r) => {
-				$.each(r.message, function(_i, e) {
-					var entry = frm.add_child("non_payable_weekly_plan_manpower_detail");
-					entry.id_map = e.id_map;
-					entry.job_title = e.job_title;
-					entry.activity = taskParent;
-					entry.subject = e.subject;
-					entry.li_permanent = e.li_permanent;
-					entry.labor_no = parseFloat(e.no_of_labor)
+		if(taskParent){
+			if (!detailManpowerPlanExists) {
+				frappe.call({
+					method: "erpnext.manpower_populate_api.get_manpower_by_task",
+					args: { parent: taskParent }
+				}).done((r) => {
+					$.each(r.message, function(_i, e) {
+						var entry = frm.add_child("non_payable_weekly_plan_manpower_detail");
+						entry.id_map = e.id_map;
+						entry.job_title = e.job_title;
+						entry.activity = taskParent;
+						entry.subject = e.subject;
+						entry.li_permanent = e.li_permanent;
+						entry.labor_no = parseFloat(e.no_of_labor)
 
-					entry.uf = e.uf;
-					entry.efficency = e.efficency;
-					entry.hourly_cost = e.hourly_cost;
-					entry.total_hourly_cost = entry.qty * entry.hourly_cost;
+						entry.uf = e.uf;
+						entry.efficency = e.efficency;
+						entry.hourly_cost = e.hourly_cost;
+						entry.total_hourly_cost = entry.qty * entry.hourly_cost;
 
-					//fetching the quantity from the database
-					frappe.call({
-						method: 'frappe.client.get_list',
-						args: {
-							doctype: 'Task',
-							filters: {
-								'name': e.parent,
+						//fetching the quantity from the database
+						frappe.call({
+							method: 'frappe.client.get_list',
+							args: {
+								doctype: 'Task',
+								filters: {
+									'name': e.parent,
+								},
+								fields: ["quantity", "productivity"],
 							},
-							fields: ["quantity", "productivity"],
-						},
-						callback: async function(response) {
-							console.log("Response ", response.message[0].quantity)
-							entry.qty = response.message[0].quantity;
-							entry.productivity = response.message[0].productivity;
+							callback: async function(response) {
+								console.log("Response ", response.message[0].quantity)
+								entry.qty = response.message[0].quantity;
+								entry.productivity = response.message[0].productivity;
 
-							console.log("uf ", entry.uf, "li ", entry.li_permanent, "qty ", entry.qty, "labor no ", entry.labor_no, "prod", entry.productivity)
-							entry.labor_hour = (entry.uf * entry.li_permanent * entry.labor_no * entry.qty) / entry.productivity;
+								console.log("uf ", entry.uf, "li ", entry.li_permanent, "qty ", entry.qty, "labor no ", entry.labor_no, "prod", entry.productivity)
+								entry.labor_hour = (entry.uf * entry.li_permanent * entry.labor_no * entry.qty) / entry.productivity;
 
 
-							frm.refresh_field("non_payable_weekly_plan_manpower_detail")
+								frm.refresh_field("non_payable_weekly_plan_manpower_detail")
 
-						}
+							}
+						})
+
 					})
-
 				})
-			})
+			}
 		}
 
 
@@ -1236,64 +1269,66 @@ function AutoPopulate(frm, cdt, cdn) {``
 
 		for (var i = 0; i < non_payable_weekly_plan_material_detail.length; i++) {
 			if (non_payable_weekly_plan_material_detail[i].activity === taskParent) {
-							detailMaterialPlanExists = true;
+				detailMaterialPlanExists = true;
 				break;
 			}
 		}
 
-		if (!detailMaterialPlanExists) {
-			frappe.call({
+		if(taskParent){
+			if (!detailMaterialPlanExists) {
+				frappe.call({
 
-				method: "erpnext.material_populate_api.get_material_by_task",
-				args: { parent: taskParent }
+					method: "erpnext.material_populate_api.get_material_by_task",
+					args: { parent: taskParent }
 
-			}).done((r) => {
-				$.each(r.message, function(_i, e) {
+				}).done((r) => {
+					$.each(r.message, function(_i, e) {
 
-					var entry = frm.add_child("non_payable_weekly_plan_material_detail");
-					entry.id_mat = e.id_mat;
-					entry.item1 = e.item1;
-					entry.activity = taskParent;
-					entry.subject = e.subject;
-					entry.uom = e.uom;
-					entry.material_qty = e.qty;
+						var entry = frm.add_child("non_payable_weekly_plan_material_detail");
+						entry.id_mat = e.id_mat;
+						entry.item1 = e.item1;
+						entry.activity = taskParent;
+						entry.subject = e.subject;
+						entry.uom = e.uom;
+						entry.material_qty = e.qty;
 
-					entry.uf = e.uf;
-					entry.efficency = e.efficency;
-					entry.unit_price = e.unit_price;
+						entry.uf = e.uf;
+						entry.efficency = e.efficency;
+						entry.unit_price = e.unit_price;
 
-					//fetching the quantity from the database
-					frappe.call({
-						method: 'frappe.client.get_list',
-						args: {
-							doctype: 'Task',
-							filters: {
-								'name': taskParent,
+						//fetching the quantity from the database
+						frappe.call({
+							method: 'frappe.client.get_list',
+							args: {
+								doctype: 'Task',
+								filters: {
+									'name': taskParent,
+								},
+								fields: ["quantity"],
 							},
-							fields: ["quantity"],
-						},
-						callback: async function(response) {
-							console.log("Response ", response.message[0].quantity)
-							entry.qty = response.message[0].quantity;
-							entry.total_material = entry.qty * entry.material_qty;
-							frm.refresh_field("non_payable_weekly_plan_material_detail");
+							callback: async function(response) {
+								console.log("Response ", response.message[0].quantity)
+								entry.qty = response.message[0].quantity;
+								entry.total_material = entry.qty * entry.material_qty;
+								frm.refresh_field("non_payable_weekly_plan_material_detail");
 
-						}
+							}
+						})
+
 					})
 
+					frm.doc.material_total_cost = grand_total_cost_for_material;
+					//frm.doc.man_power_unit_rate = (sum_of_unit_rate/number_of_items);
+
+					refresh_field("material1");
+					refresh_field("material_total_cost");
+					refresh_field("material_detail_summerized");
 				})
-
-				frm.doc.material_total_cost = grand_total_cost_for_material;
-				//frm.doc.man_power_unit_rate = (sum_of_unit_rate/number_of_items);
-
-				refresh_field("material1");
-				refresh_field("material_total_cost");
-				refresh_field("material_detail_summerized");
-			})
+			}
 		}
 
 
-		
+
 	});
 
 }
