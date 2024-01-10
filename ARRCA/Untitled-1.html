@@ -1,0 +1,35 @@
+<h2 class="text-center">{{ __("Supplier Winner") }}</h2>
+<hr>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th style="width: 12%">{{ __("የዕቃው አይነት") }}</th>
+            <th style="width: 12%">{{ __("መለኪያ") }}</th>
+            <th style="width: 12%">{{ __("ብዛት") }}</th>
+            <th style="width: 12%" colspan="{% if data|length > 0 %}{{ data|groupby('Item Code')|map('list')|map('length')|max }}{% else %}1{% endif %}">
+                {{ __("ተወዳዳሪ ድርጅቶች") }}
+            </th>
+            <th style="width: 12%">{{ __("ዝቅትኛ ዋጋ") }}</th>
+            <th style="width: 12%">{{ __("ጠ/ዋጋ") }}</th>
+            <th style="width: 12%">{{ __("የተመረጠው ድርጅት") }}</th>
+            <th style="width: 12%">{{ __("ምርመራ") }}</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in data %}
+            <tr>
+                <td>{{ item["Item Code"] }}</td>
+                <td>{{ item["UOM"] }}</td>
+                <td>{{ item["Quantity"] }}</td>
+                {# Add logic to span columns for identical Item Codes #}
+                {% set item_code = item["Item Code"] %}
+                {% set count = data|selectattr('Item Code', 'eq', item_code)|list|length %}
+                <td colspan="{{ count }}">{{ item_code }}</td>
+                {# Continue with other columns for the remaining data #}
+                <td>{{ item["Some Field"] }}</td>
+                <td>{{ item["Another Field"] }}</td>
+                <!-- Add other fields as needed -->
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>

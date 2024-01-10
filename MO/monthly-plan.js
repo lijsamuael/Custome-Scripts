@@ -261,11 +261,13 @@ function mainFunction(frm, cdt, cdn) {
 
 					},
 					fields: ['*'],
-					limit_page_length: 1000
+					limit_page_length: 1000,
+					order_by: "idx"
+					
 				},
 				callback: async function(response) {
 					var resp = response.message;
-					console.log("response", resp)
+					console.log("response after ordering", resp)
 
 					// Get the non-null idx value
 					var idxValue =
@@ -365,7 +367,7 @@ function mainFunction(frm, cdt, cdn) {
 					var task_productivity = 0;
 
 					//iterate and get the full information of the tasks from the oprational detail plan
-					filteredResults.map((item, index) => {
+				await filteredResults.map((item, index) => {
 						frappe.call({
 							method: 'frappe.client.get_list',
 							args: {
@@ -376,7 +378,7 @@ function mainFunction(frm, cdt, cdn) {
 								fields: ['*']
 							},
 							callback: async function(response) {
-								console.log("response", response.message[0])
+								console.log("response ater ordering again", response.message[0])
 								var op_activity = response.message[0];
 								console.log("op aaacc", op_activity);
 
@@ -1112,6 +1114,7 @@ frappe.ui.form.on("Monthly Plan Detail", {
 
 								},
 								fields: ['*'],
+								order_by: "idx",
 								limit_page_length: 1000
 							},
 							callback: async function(response) {

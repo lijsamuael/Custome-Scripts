@@ -9,6 +9,8 @@ frappe.ui.form.on('Payment Certificate for Construction', {
 	}
 });
 
+
+
 var mainContract = 0;
 var greaterDate;
 var lastContract;

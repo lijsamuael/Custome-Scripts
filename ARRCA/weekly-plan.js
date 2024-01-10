@@ -79,14 +79,44 @@ function MPAutoPopulate(frm, mp_activites, planned_this_week) {
 
 	$.each(mp_activites, function(eachIndex, mp_activity) {
 
+		var date1 = frm.doc.start_date;
+		var today = frm.doc.date;
+		console.log("today ", today);
+
 		//add row
 		const target_row = frm.add_child('weekly_plan_detail_master');
+		
 		target_row.activity = mp_activity.activity;
 		target_row.activity_name = mp_activity.subject;
 		target_row.uom = mp_activity.uom;
 		console.log("week value", week_value)
 		target_row.planned = mp_activity["w_" + week_value]
 		console.log("mp activities", mp_activity)
+
+		frappe.call({
+			method: 'frappe.client.get_list',
+			args: {
+				doctype: 'Timesheet',
+				filters: [
+					['date', ">", date1],
+					["date", "<", today],
+					["task_name", "=", mp_activity.activity]
+				],
+				fields: ["*"],
+			},
+			callback: async function(response) {
+				console.log("Response about timesheeeeeeeeeeeeeeeeeetA", response.message)
+				var total_executed = 0;
+				response.message.map((item) => {
+					total_executed += item.executed_quantity;
+				})
+				target_row.to_date = total_executed;
+				target_row.planned_this_week = target_row.planned - target_row.to_date;
+				frm.refresh_field("weekly_plan_detail_master")
+
+			}
+		})
+
 		//fetching the quantity from the database
 		frappe.call({
 			method: 'frappe.client.get_list',
@@ -107,21 +137,13 @@ function MPAutoPopulate(frm, mp_activites, planned_this_week) {
 		target_row.rate = mp_activity.rate;
 		target_row.amount = target_row.quantity * target_row.rate;
 
-		// if (target_row.activity && date1 && date2) {
-		// 	frappe.call({
-		// 		method: "erpnext.timesheet_sum_of_executed_qty.get_executed_quantity_from_timesheet",
-		// 		args: { activity: target_row.activity, date1: date1, date2: date2 }
-		// 	}).done((r) => {
-		// 		if (r.message.length >= 1)
-		// 			if (r.message[0]) {
+		var date1 = frm.doc.start_date;
+		var date2 = frm.doc.end_date;
 
-		// 				var executed_quantity = isNaN(r.message[0]) ? r.message[0] : 0;
-		// 				target_row.executed_quantity = parseFloat(executed_quantity);
-		// 				var remaining = target_row.quantity - parseFloat(executed_quantity);
-		// 				target_row.remaining = remaining
-		// 			}
-		// 	})
-		// }
+
+
+
+
 	});
 
 	ExecuteWeeklyPlanDetail(frm, planned_this_week);
@@ -133,6 +155,26 @@ function AutoPopulate(frm, cdt, cdn, planned_this_week) {
 
 		var date1 = frm.doc.start_date;
 		var date2 = frm.doc.end_date;
+		var today = frappe.datetime.today();
+		console.log("today ", today);
+
+		frappe.call({
+			method: 'frappe.client.get_list',
+			args: {
+				doctype: 'Timesheet',
+				filters: [
+					['date', ">", date1],
+					["date", "<", today]
+				],
+				fields: ["*"],
+			},
+			callback: async function(response) {
+				console.log("Response about timesheeeeeeeeeeeeeeeeeetA", response.message)
+
+				frm.refresh_field("manpower1")
+
+			}
+		})
 
 		var d = locals[cdt][cdn];
 		var monthly_plan_code  = frappe.model.get_value(d.doctype, d.name, "monthly_plan_code");

@@ -1,3 +1,22 @@
+//calcula the overhead cost
+cur_frm.add_fetch('id_mac', 'mc_number', 'qty');
+
+frappe.ui.form.on("Task", {
+    indirectcost: function (frm, cdt, cdn) {
+        frm.set_value("indirect_cost_total", frm.doc.indirectcost * frm.doc.activity_total_cost / 100)
+        frm.refresh_field("indirect_cost_total")
+    },
+    profitmargin: function (frm, cdt, cdn) {
+        var indirect_cost = frm.doc.indirect_cost_total + frm.doc.activity_total_cost
+        frm.set_value("total_with_profit_margin", indirect_cost * frm.doc.profitmargin / 100)
+        frm.refresh_field("total_with_profit_margin")
+    },
+
+});
+
+
+
+
 //calculate the total small equipment cost
 frappe.ui.form.on("Task", {
     equipment_total_cost: function (frm, cdt, cdn) {
@@ -17,7 +36,7 @@ function get_equipment_total_cost(frm, cdt, cdn) {
         frm.refresh_field("small_tools_cost")
 
         if (frm.doc.productivity) {
-            frm.set_value("equipment_unit_cost", (frm.doc.equipment_total_cost * frm.doc.small_tools_cost) / frm.doc.productivity)
+            frm.set_value("equipment_unit_cost", (frm.doc.equipment_total_cost + frm.doc.small_tools_cost) / frm.doc.productivity)
             frm.refresh_field("equipment_unit_cost")
         }
     }
@@ -53,7 +72,7 @@ frappe.ui.form.on("Manpower Detail", {
 });
 
 frappe.ui.form.on("Material DetailARRCA", {
-    labor_no: function (frm, cdt, cdn) {
+    qaty: function (frm, cdt, cdn) {
         calculate_brides_mtOne(frm, cdt, cdn)
         calculate_brides_mtTwo(frm, cdt, cdn)
     },
@@ -61,7 +80,7 @@ frappe.ui.form.on("Material DetailARRCA", {
         calculate_brides_mtOne(frm, cdt, cdn)
         calculate_brides_mtTwo(frm, cdt, cdn)
     },
-    efficency: function (frm, cdt, cdn) {
+    unit_price: function (frm, cdt, cdn) {
         calculate_brides_mtOne(frm, cdt, cdn)
         calculate_brides_mtTwo(frm, cdt, cdn)
     }
@@ -79,8 +98,8 @@ function calculate_brides(frm, cdt, cdn) {
             var bu = frm.doc.no_of_crew * frm.doc.working_hour_per_day * row.qty * row.efficency * row.uf
             var bc = bu * row.rental_rate / frm.doc.productivity;
             console.log("bu", bu)
-            row.budget_unit = bu * frm.doc.duration;
-            row.budget_cost = bc;
+            row.budget_unit = bu * frm.doc.duration_in_days;
+            row.budget_cost = row.budget_unit * row.rental_rate
             row.budgeted_unit_per_time = bu;
 
             frm.refresh_field("machinery");
@@ -98,8 +117,8 @@ function calculate_brides_mp(frm, cdt, cdn) {
             console.log("bu", bu)
             var bc = bu * row.li_permanent / frm.doc.productivity;
             row.budgeted_unit_per_time = bu;
-            row.budget_unit = bu * frm.doc.duration;
-            row.budget_cost = bc;
+            row.budget_unit = bu * frm.doc.duration_in_days;
+            row.budget_cost = row.budget_unit * row.hourly_cost
             frm.refresh_field("manpower1");
         }
     }
@@ -108,12 +127,15 @@ function calculate_brides_mp(frm, cdt, cdn) {
 function calculate_brides_mtOne(frm, cdt, cdn) {
     if (frm.doc.quantity) {
         var row = locals[cdt][cdn];
-
+        console.log("row", row);
         if (row.qaty && row.unit_price) {
-            var bu = row.qaty / row.unit_price * frm.doc.quantity;
+            console.log("we arae here", row.qaty, row.unit_price)
+            var bu = row.qaty * frm.doc.no_of_crew * frm.doc.working_hour_per_day
             var bc = bu;
-            row.budget_unit = bu;
-            row.budget_cost = bc;
+            row.total_cost = row.qaty * row.unit_price
+            row.budgeted_unit_per_time = bu;
+            row.budget_unit = bu * frm.doc.duration_in_days;
+            row.budget_cost = row.budget_unit * row.unit_price;
             frm.refresh_field("material1");
         }
     }
@@ -122,13 +144,15 @@ function calculate_brides_mtOne(frm, cdt, cdn) {
 function calculate_brides_mtTwo(frm, cdt, cdn) {
     if (frm.doc.quantity) {
         var row = locals[cdt][cdn];
-
+        console.log("row", row);
         if (row.qaty && row.unit_price) {
+            console.log("we arae here", row.qaty, row.unit_price)
             var bu = row.qaty * frm.doc.no_of_crew * frm.doc.working_hour_per_day
             var bc = bu;
+            row.total_cost = row.qaty * row.unit_price
             row.budgeted_unit_per_time = bu;
-            row.budget_unit = bu * frm.doc.duration;
-            row.budget_cost = bc;
+            row.budget_unit = bu * frm.doc.duration_in_days;
+            row.budget_cost = row.budget_unit * row.unit_price;
             frm.refresh_field("material_2");
         }
     }
@@ -418,7 +442,7 @@ frappe.ui.form.on('Task', {
                     target_row.uom = source_row.uom;
                     target_row.qty = source_row.qty;
                     target_row.unit_price = source_row.unit_price;
-                    target_row.total_cost = source_row.total_cost;
+                    // target_row.total_cost = source_row.total_cost;
                     frm.refresh_field('material1');
                 });
             });
@@ -641,7 +665,7 @@ frappe.ui.form.on("Material DetailARRCA", {
     qaty: function (frm, cdt, cdn) {
         var d = locals[cdt][cdn];
         frappe.model.set_value(d.doctype, d.name, 'total_cost', ((d.
-            qaty * d.unit_price * d.uf * d.machinery_qty) + d.loading_unloading_cost + d.transportation_cost));
+            qaty * d.unit_price )));
 
         set_total_mat(frm);
     }
@@ -682,37 +706,19 @@ frappe.ui.form.on("Task", {
 frappe.ui.form.on("Material DetailARRCA", {
     unit_price: function (frm, cdt, cdn) {
         var d = locals[cdt][cdn];
-        frappe.model.set_value(d.doctype, d.name, 'total_cost', ((d.qaty * d.unit_price * d.uf * d.machinery_qty) + d.loading_unloading_cost + d.transportation_cost));
+        frappe.model.set_value(d.doctype, d.name, 'total_cost', ((d.qaty * d.unit_price )));
 
         set_total_mat(frm);
     }
 
 });
 
-frappe.ui.form.on("Material DetailARRCA", {
-    loading_unloading_cost: function (frm, cdt, cdn) {
-        var d = locals[cdt][cdn];
-        frappe.model.set_value(d.doctype, d.name, 'total_cost', ((d.qaty * d.unit_price * d.uf * d.machinery_qty) + d.loading_unloading_cost + d.transportation_cost));
 
-        set_total_mat(frm);
-    }
-
-});
-
-frappe.ui.form.on("Material DetailARRCA", {
-    transportation_cost: function (frm, cdt, cdn) {
-        var d = locals[cdt][cdn];
-        frappe.model.set_value(d.doctype, d.name, 'total_cost', ((d.qaty * d.unit_price * d.uf * d.machinery_qty) + d.loading_unloading_cost + d.transportation_cost));
-
-        set_total_mat(frm);
-    }
-
-});
 
 frappe.ui.form.on("Material DetailARRCA", {
     uf: function (frm, cdt, cdn) {
         var d = locals[cdt][cdn];
-        frappe.model.set_value(d.doctype, d.name, 'total_cost', ((d.qaty * d.unit_price * d.uf * d.machinery_qty) + d.loading_unloading_cost + d.transportation_cost));
+        frappe.model.set_value(d.doctype, d.name, 'total_cost', ((d.qaty * d.unit_price)));
 
         set_total_mat(frm);
     }
@@ -723,7 +729,7 @@ frappe.ui.form.on("Material DetailARRCA", {
 frappe.ui.form.on("Material DetailARRCA", {
     machinery_qty: function (frm, cdt, cdn) {
         var d = locals[cdt][cdn];
-        frappe.model.set_value(d.doctype, d.name, 'total_cost', ((d.qaty * d.unit_price * d.uf * d.machinery_qty) + d.loading_unloading_cost + d.transportation_cost));
+        frappe.model.set_value(d.doctype, d.name, 'total_cost', ((d.qaty * d.unit_price)));
 
         set_total_mat(frm);
         set_total_matout(frm);
@@ -795,17 +801,17 @@ frappe.ui.form.on("Task", {
 // ACTIVITY TOTAL COST RELATED SCRIPT
 frappe.ui.form.on("Task", "man_power_unit_rate", function (frm, cdt, cdn) {
     var d = locals[cdt][cdn];
-    frappe.model.set_value(cdt, cdn, "activity_total_cost", d.man_power_unit_rate + d.equipment_unit_rate + d.material_unit_rate + d.material_direct_cost1);
+    frappe.model.set_value(cdt, cdn, "activity_total_cost", d.man_power_unit_rate + d.equipment_unit_cost + d.material_total_cost);
 });
 
 frappe.ui.form.on("Task", "equipment_unit_rate", function (frm, cdt, cdn) {
     var d = locals[cdt][cdn];
-    frappe.model.set_value(cdt, cdn, "activity_total_cost", d.man_power_unit_rate + d.equipment_unit_rate + d.material_unit_rate + d.material_direct_cost1);
+    frappe.model.set_value(cdt, cdn, "activity_total_cost", d.man_power_unit_rate + d.equipment_unit_cost + d.material_total_cost);
 });
 
 frappe.ui.form.on("Task", "material_unit_rate", function (frm, cdt, cdn) {
     var d = locals[cdt][cdn];
-    frappe.model.set_value(cdt, cdn, "activity_total_cost", d.man_power_unit_rate + d.equipment_unit_rate + d.material_unit_rate + d.material_direct_cost1);
+    frappe.model.set_value(cdt, cdn, "activity_total_cost", d.man_power_unit_rate + d.equipment_unit_cost + d.material_total_cost);
 });
 frappe.ui.form.on("Task", "man_power_unit_rate", function (frm, cdt, cdn) {
     var d = locals[cdt][cdn];
@@ -824,7 +830,7 @@ frappe.ui.form.on("Task", "man_power_unit_rate", function (frm, cdt, cdn) {
     if (frm.doc.man_power_unit_rate_sc == '') { frm.doc.man_power_unit_rate_sc = 0; }
     if (frm.doc.equipment_unit_rate_sc == '') { frm.doc.equipment_unit_rate_sc = 0; }
     if (frm.doc.material_unit_rate_sc == '') { frm.doc.material_unit_rate_sc = 0; }
-    frappe.model.set_value(cdt, cdn, "activity_total_cost", d.man_power_unit_rate + d.equipment_unit_rate + d.material_unit_rate + d.man_power_unit_rate_sc + d.equipment_unit_rate_sc + d.material_unit_rate_sc);
+    frappe.model.set_value(cdt, cdn, "activity_total_cost", d.man_power_unit_rate + d.equipment_unit_cost + d.material_total_cost + d.man_power_unit_rate_sc + d.equipment_unit_rate_sc + d.material_unit_rate_sc);
 });
 
 frappe.ui.form.on("Task", "equipment_unit_rate", function (frm, cdt, cdn) {
@@ -844,7 +850,7 @@ frappe.ui.form.on("Task", "equipment_unit_rate", function (frm, cdt, cdn) {
     if (frm.doc.man_power_unit_rate_sc == '') { frm.doc.man_power_unit_rate_sc = 0; }
     if (frm.doc.equipment_unit_rate_sc == '') { frm.doc.equipment_unit_rate_sc = 0; }
     if (frm.doc.material_unit_rate_sc == '') { frm.doc.material_unit_rate_sc = 0; }
-    frappe.model.set_value(cdt, cdn, "activity_total_cost", d.man_power_unit_rate + d.equipment_unit_rate + d.material_unit_rate + d.man_power_unit_rate_sc + d.equipment_unit_rate_sc + d.material_unit_rate_sc);
+    frappe.model.set_value(cdt, cdn, "activity_total_cost", d.man_power_unit_rate + d.equipment_unit_cost + d.material_total_cost + d.man_power_unit_rate_sc + d.equipment_unit_rate_sc + d.material_unit_rate_sc);
 });
 
 frappe.ui.form.on("Task", "material_total_cost", function (frm, cdt, cdn) {
@@ -864,7 +870,7 @@ frappe.ui.form.on("Task", "material_total_cost", function (frm, cdt, cdn) {
     if (frm.doc.man_power_unit_rate_sc == '') { frm.doc.man_power_unit_rate_sc = 0; }
     if (frm.doc.equipment_unit_rate_sc == '') { frm.doc.equipment_unit_rate_sc = 0; }
     if (frm.doc.material_unit_rate_sc == '') { frm.doc.material_unit_rate_sc = 0; }
-    frappe.model.set_value(cdt, cdn, "activity_total_cost", d.man_power_unit_rate + d.equipment_unit_rate + d.material_unit_rate + d.man_power_unit_rate_sc + d.equipment_unit_rate_sc + d.material_unit_rate_sc);
+    frappe.model.set_value(cdt, cdn, "activity_total_cost", d.man_power_unit_rate + d.equipment_unit_cost + d.material_total_cost + d.man_power_unit_rate_sc + d.equipment_unit_rate_sc + d.material_unit_rate_sc);
 });
 
 frappe.ui.form.on("Task", "man_power_unit_rate_sc", function (frm, cdt, cdn) {
@@ -884,7 +890,7 @@ frappe.ui.form.on("Task", "man_power_unit_rate_sc", function (frm, cdt, cdn) {
     if (frm.doc.man_power_unit_rate_sc == '') { frm.doc.man_power_unit_rate_sc = 0; }
     if (frm.doc.equipment_unit_rate_sc == '') { frm.doc.equipment_unit_rate_sc = 0; }
     if (frm.doc.material_unit_rate_sc == '') { frm.doc.material_unit_rate_sc = 0; }
-    frappe.model.set_value(cdt, cdn, "activity_total_cost", d.man_power_unit_rate + d.equipment_unit_rate + d.material_unit_rate + d.man_power_unit_rate_sc + d.equipment_unit_rate_sc + d.material_unit_rate_sc);
+    frappe.model.set_value(cdt, cdn, "activity_total_cost", d.man_power_unit_rate + d.equipment_unit_cost + d.material_total_cost + d.man_power_unit_rate_sc + d.equipment_unit_rate_sc + d.material_unit_rate_sc);
 });
 
 frappe.ui.form.on("Task", "equipment_unit_rate_sc", function (frm, cdt, cdn) {
@@ -904,7 +910,7 @@ frappe.ui.form.on("Task", "equipment_unit_rate_sc", function (frm, cdt, cdn) {
     if (frm.doc.man_power_unit_rate_sc == '') { frm.doc.man_power_unit_rate_sc = 0; }
     if (frm.doc.equipment_unit_rate_sc == '') { frm.doc.equipment_unit_rate_sc = 0; }
     if (frm.doc.material_unit_rate_sc == '') { frm.doc.material_unit_rate_sc = 0; }
-    frappe.model.set_value(cdt, cdn, "activity_total_cost", d.man_power_unit_rate + d.equipment_unit_rate + d.material_unit_rate + d.man_power_unit_rate_sc + d.equipment_unit_rate_sc + d.material_unit_rate_sc);
+    frappe.model.set_value(cdt, cdn, "activity_total_cost", d.man_power_unit_rate + d.equipment_unit_cost + d.material_total_cost + d.man_power_unit_rate_sc + d.equipment_unit_rate_sc + d.material_unit_rate_sc);
 });
 
 frappe.ui.form.on("Task", "material_unit_rate_sc", function (frm, cdt, cdn) {
@@ -924,7 +930,7 @@ frappe.ui.form.on("Task", "material_unit_rate_sc", function (frm, cdt, cdn) {
     if (frm.doc.man_power_unit_rate_sc == '') { frm.doc.man_power_unit_rate_sc = 0; }
     if (frm.doc.equipment_unit_rate_sc == '') { frm.doc.equipment_unit_rate_sc = 0; }
     if (frm.doc.material_unit_rate_sc == '') { frm.doc.material_unit_rate_sc = 0; }
-    frappe.model.set_value(cdt, cdn, "activity_total_cost", d.man_power_unit_rate + d.equipment_unit_rate + d.material_unit_rate + d.man_power_unit_rate_sc + d.equipment_unit_rate_sc + d.material_unit_rate_sc);
+    frappe.model.set_value(cdt, cdn, "activity_total_cost", d.man_power_unit_rate + d.equipment_unit_cost + d.material_total_cost + d.man_power_unit_rate_sc + d.equipment_unit_rate_sc + d.material_unit_rate_sc);
 });
 
 
@@ -1170,7 +1176,7 @@ function physicalWastage(frm) {//calculate the total small equipment cost
             frm.refresh_field("small_tools_cost")
 
             if (frm.doc.productivity) {
-                frm.set_value("equipment_unit_cost", (frm.doc.equipment_total_cost * frm.doc.small_tools_cost) / frm.doc.productivity)
+                frm.set_value("equipment_unit_cost", (frm.doc.equipment_total_cost + frm.doc.small_tools_cost) / frm.doc.productivity)
                 frm.refresh_field("equipment_unit_cost")
             }
         }
@@ -1522,16 +1528,16 @@ function physicalWastage(frm) {//calculate the total small equipment cost
     frappe.ui.form.on('Task', {
         task_name: function (frm) {
             if (frm.doc.task_name) {
-                frm.clear_table('material1');
+                frm.clear_table('material_2');
                 frappe.model.with_doc('Task Master', frm.doc.task_name, function () {
                     let source_doc = frappe.model.get_doc('Task Master', frm.doc.task_name);
                     $.each(source_doc.material, function (index, source_row) {
-                        const target_row = frm.add_child('material1');
+                        const target_row = frm.add_child('material_2');
                         target_row.item = source_row.item;
                         target_row.uom = source_row.uom;
                         target_row.qty = source_row.qty;
                         target_row.unit_price = source_row.unit_price;
-                        target_row.total_cost = source_row.total_cost;
+                        // target_row.total_cost = source_row.total_cost;
                         frm.refresh_field('material1');
                     });
                 });
@@ -1754,7 +1760,7 @@ function physicalWastage(frm) {//calculate the total small equipment cost
         qaty: function (frm, cdt, cdn) {
             var d = locals[cdt][cdn];
             frappe.model.set_value(d.doctype, d.name, 'total_cost', ((d.
-                qaty * d.unit_price * d.uf * d.machinery_qty) + d.loading_unloading_cost + d.transportation_cost));
+                qaty * d.unit_price )));
 
             set_total_mat(frm);
         }
@@ -1795,7 +1801,7 @@ function physicalWastage(frm) {//calculate the total small equipment cost
     frappe.ui.form.on("Material DetailARRCA", {
         unit_price: function (frm, cdt, cdn) {
             var d = locals[cdt][cdn];
-            frappe.model.set_value(d.doctype, d.name, 'total_cost', ((d.qaty * d.unit_price * d.uf * d.machinery_qty) + d.loading_unloading_cost + d.transportation_cost));
+            frappe.model.set_value(d.doctype, d.name, 'total_cost', ((d.qaty * d.unit_price )));
 
             set_total_mat(frm);
         }
@@ -1805,7 +1811,7 @@ function physicalWastage(frm) {//calculate the total small equipment cost
     frappe.ui.form.on("Material DetailARRCA", {
         loading_unloading_cost: function (frm, cdt, cdn) {
             var d = locals[cdt][cdn];
-            frappe.model.set_value(d.doctype, d.name, 'total_cost', ((d.qaty * d.unit_price * d.uf * d.machinery_qty) + d.loading_unloading_cost + d.transportation_cost));
+            frappe.model.set_value(d.doctype, d.name, 'total_cost', ((d.qaty * d.unit_price )));
 
             set_total_mat(frm);
         }
@@ -1815,7 +1821,7 @@ function physicalWastage(frm) {//calculate the total small equipment cost
     frappe.ui.form.on("Material DetailARRCA", {
         transportation_cost: function (frm, cdt, cdn) {
             var d = locals[cdt][cdn];
-            frappe.model.set_value(d.doctype, d.name, 'total_cost', ((d.qaty * d.unit_price * d.uf * d.machinery_qty) + d.loading_unloading_cost + d.transportation_cost));
+            frappe.model.set_value(d.doctype, d.name, 'total_cost', ((d.qaty * d.unit_price)));
 
             set_total_mat(frm);
         }
@@ -1823,21 +1829,20 @@ function physicalWastage(frm) {//calculate the total small equipment cost
     });
 
     frappe.ui.form.on("Material DetailARRCA", {
-        uf: function (frm, cdt, cdn) {
+        qaty: function (frm, cdt, cdn) {
             var d = locals[cdt][cdn];
-            frappe.model.set_value(d.doctype, d.name, 'total_cost', ((d.qaty * d.unit_price * d.uf * d.machinery_qty) + d.loading_unloading_cost + d.transportation_cost));
-
+            frappe.model.set_value(d.doctype, d.name, 'total_cost', ((d.qaty * d.unit_price)));
             set_total_mat(frm);
+            set_total_matout(frm);
         }
 
     });
 
 
     frappe.ui.form.on("Material DetailARRCA", {
-        machinery_qty: function (frm, cdt, cdn) {
+        unit_price: function (frm, cdt, cdn) {
             var d = locals[cdt][cdn];
-            frappe.model.set_value(d.doctype, d.name, 'total_cost', ((d.qaty * d.unit_price * d.uf * d.machinery_qty) + d.loading_unloading_cost + d.transportation_cost));
-
+            frappe.model.set_value(d.doctype, d.name, 'total_cost', ((d.qaty * d.unit_price )))
             set_total_mat(frm);
             set_total_matout(frm);
         }
@@ -1868,6 +1873,7 @@ function physicalWastage(frm) {//calculate the total small equipment cost
 
     frappe.ui.form.on("Task", "validate", function (frm) {
         set_total_mat(frm);
+        set_total_matout(frm);
     });
 
 
@@ -1908,17 +1914,17 @@ function physicalWastage(frm) {//calculate the total small equipment cost
     // ACTIVITY TOTAL COST RELATED SCRIPT
     frappe.ui.form.on("Task", "man_power_unit_rate", function (frm, cdt, cdn) {
         var d = locals[cdt][cdn];
-        frappe.model.set_value(cdt, cdn, "activity_total_cost", d.man_power_unit_rate + d.equipment_unit_rate + d.material_unit_rate + d.material_direct_cost1);
+        frappe.model.set_value(cdt, cdn, "activity_total_cost", d.man_power_unit_rate + d.equipment_unit_cost + d.material_total_cost);
     });
 
     frappe.ui.form.on("Task", "equipment_unit_rate", function (frm, cdt, cdn) {
         var d = locals[cdt][cdn];
-        frappe.model.set_value(cdt, cdn, "activity_total_cost", d.man_power_unit_rate + d.equipment_unit_rate + d.material_unit_rate + d.material_direct_cost1);
+        frappe.model.set_value(cdt, cdn, "activity_total_cost", d.man_power_unit_rate + d.equipment_unit_cost + d.material_total_cost);
     });
 
     frappe.ui.form.on("Task", "material_unit_rate", function (frm, cdt, cdn) {
         var d = locals[cdt][cdn];
-        frappe.model.set_value(cdt, cdn, "activity_total_cost", d.man_power_unit_rate + d.equipment_unit_rate + d.material_unit_rate + d.material_direct_cost1);
+        frappe.model.set_value(cdt, cdn, "activity_total_cost", d.man_power_unit_rate + d.equipment_unit_cost + d.material_total_cost);
     });
     frappe.ui.form.on("Task", "man_power_unit_rate", function (frm, cdt, cdn) {
         var d = locals[cdt][cdn];
@@ -1937,7 +1943,7 @@ function physicalWastage(frm) {//calculate the total small equipment cost
         if (frm.doc.man_power_unit_rate_sc == '') { frm.doc.man_power_unit_rate_sc = 0; }
         if (frm.doc.equipment_unit_rate_sc == '') { frm.doc.equipment_unit_rate_sc = 0; }
         if (frm.doc.material_unit_rate_sc == '') { frm.doc.material_unit_rate_sc = 0; }
-        frappe.model.set_value(cdt, cdn, "activity_total_cost", d.man_power_unit_rate + d.equipment_unit_rate + d.material_unit_rate + d.man_power_unit_rate_sc + d.equipment_unit_rate_sc + d.material_unit_rate_sc);
+        frappe.model.set_value(cdt, cdn, "activity_total_cost", d.man_power_unit_rate + d.equipment_unit_cost + d.material_total_cost + d.man_power_unit_rate_sc + d.equipment_unit_rate_sc + d.material_unit_rate_sc);
     });
 
     frappe.ui.form.on("Task", "equipment_unit_rate", function (frm, cdt, cdn) {
@@ -1957,7 +1963,7 @@ function physicalWastage(frm) {//calculate the total small equipment cost
         if (frm.doc.man_power_unit_rate_sc == '') { frm.doc.man_power_unit_rate_sc = 0; }
         if (frm.doc.equipment_unit_rate_sc == '') { frm.doc.equipment_unit_rate_sc = 0; }
         if (frm.doc.material_unit_rate_sc == '') { frm.doc.material_unit_rate_sc = 0; }
-        frappe.model.set_value(cdt, cdn, "activity_total_cost", d.man_power_unit_rate + d.equipment_unit_rate + d.material_unit_rate + d.man_power_unit_rate_sc + d.equipment_unit_rate_sc + d.material_unit_rate_sc);
+        frappe.model.set_value(cdt, cdn, "activity_total_cost", d.man_power_unit_rate + d.equipment_unit_cost + d.material_total_cost + d.man_power_unit_rate_sc + d.equipment_unit_rate_sc + d.material_unit_rate_sc);
     });
 
     frappe.ui.form.on("Task", "material_total_cost", function (frm, cdt, cdn) {
@@ -1977,7 +1983,7 @@ function physicalWastage(frm) {//calculate the total small equipment cost
         if (frm.doc.man_power_unit_rate_sc == '') { frm.doc.man_power_unit_rate_sc = 0; }
         if (frm.doc.equipment_unit_rate_sc == '') { frm.doc.equipment_unit_rate_sc = 0; }
         if (frm.doc.material_unit_rate_sc == '') { frm.doc.material_unit_rate_sc = 0; }
-        frappe.model.set_value(cdt, cdn, "activity_total_cost", d.man_power_unit_rate + d.equipment_unit_rate + d.material_unit_rate + d.man_power_unit_rate_sc + d.equipment_unit_rate_sc + d.material_unit_rate_sc);
+        frappe.model.set_value(cdt, cdn, "activity_total_cost", d.man_power_unit_rate + d.equipment_unit_cost + d.material_total_cost + d.man_power_unit_rate_sc + d.equipment_unit_rate_sc + d.material_unit_rate_sc);
     });
 
     frappe.ui.form.on("Task", "man_power_unit_rate_sc", function (frm, cdt, cdn) {
@@ -1997,7 +2003,7 @@ function physicalWastage(frm) {//calculate the total small equipment cost
         if (frm.doc.man_power_unit_rate_sc == '') { frm.doc.man_power_unit_rate_sc = 0; }
         if (frm.doc.equipment_unit_rate_sc == '') { frm.doc.equipment_unit_rate_sc = 0; }
         if (frm.doc.material_unit_rate_sc == '') { frm.doc.material_unit_rate_sc = 0; }
-        frappe.model.set_value(cdt, cdn, "activity_total_cost", d.man_power_unit_rate + d.equipment_unit_rate + d.material_unit_rate + d.man_power_unit_rate_sc + d.equipment_unit_rate_sc + d.material_unit_rate_sc);
+        frappe.model.set_value(cdt, cdn, "activity_total_cost", d.man_power_unit_rate + d.equipment_unit_cost + d.material_total_cost + d.man_power_unit_rate_sc + d.equipment_unit_rate_sc + d.material_unit_rate_sc);
     });
 
     frappe.ui.form.on("Task", "equipment_unit_rate_sc", function (frm, cdt, cdn) {
@@ -2017,7 +2023,7 @@ function physicalWastage(frm) {//calculate the total small equipment cost
         if (frm.doc.man_power_unit_rate_sc == '') { frm.doc.man_power_unit_rate_sc = 0; }
         if (frm.doc.equipment_unit_rate_sc == '') { frm.doc.equipment_unit_rate_sc = 0; }
         if (frm.doc.material_unit_rate_sc == '') { frm.doc.material_unit_rate_sc = 0; }
-        frappe.model.set_value(cdt, cdn, "activity_total_cost", d.man_power_unit_rate + d.equipment_unit_rate + d.material_unit_rate + d.man_power_unit_rate_sc + d.equipment_unit_rate_sc + d.material_unit_rate_sc);
+        frappe.model.set_value(cdt, cdn, "activity_total_cost", d.man_power_unit_rate + d.equipment_unit_cost + d.material_total_cost + d.man_power_unit_rate_sc + d.equipment_unit_rate_sc + d.material_unit_rate_sc);
     });
 
     frappe.ui.form.on("Task", "material_unit_rate_sc", function (frm, cdt, cdn) {
@@ -2037,7 +2043,7 @@ function physicalWastage(frm) {//calculate the total small equipment cost
         if (frm.doc.man_power_unit_rate_sc == '') { frm.doc.man_power_unit_rate_sc = 0; }
         if (frm.doc.equipment_unit_rate_sc == '') { frm.doc.equipment_unit_rate_sc = 0; }
         if (frm.doc.material_unit_rate_sc == '') { frm.doc.material_unit_rate_sc = 0; }
-        frappe.model.set_value(cdt, cdn, "activity_total_cost", d.man_power_unit_rate + d.equipment_unit_rate + d.material_unit_rate + d.man_power_unit_rate_sc + d.equipment_unit_rate_sc + d.material_unit_rate_sc);
+        frappe.model.set_value(cdt, cdn, "activity_total_cost", d.man_power_unit_rate + d.equipment_unit_cost + d.material_total_cost + d.man_power_unit_rate_sc + d.equipment_unit_rate_sc + d.material_unit_rate_sc);
     });
 
 

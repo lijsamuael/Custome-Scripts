@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Page Title</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .page-content {
+            flex: 1;
+        }
+        .footer {
+            padding: 10px;
+            text-align: center;
+            position: relative;
+            bottom: 0;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="page-content">
+
+
+            <div class="letter-head">
+ 
+                {{ letter_head }}
+                <div style="padding-top: 70px; display: flex; flex-direction: column; align-items: flex-end;">
+                    <div style="display: flex;">
+                        <label for="docName">ቁጥር:</label>
+                        <input id="docName" style="text-align: left; width: 200px; border: none;" placeholder={{doc.name}}>
+                    </div>
+                
+                    <div style="display: flex;">
+                        <label for="currentDate">ቀን:</label>
+                        <input type="text" id="currentDate" style="text-align: left; width: 200px; margin-right: 10px; border: none;" value="{{ doc.internal_work_history[-1].to_date_ec }}">
+                    </div>
+                 
+                </div>
+                
+                
+            </div>
+
+        <div {% if terms_exist -%} class="page-break" {%- endif %}>
+            <p>
+
+                <!-- job offer terms and description from the table -->
+
+                {%- if doc.offer_terms -%}
+                    {%- for row in doc.offer_terms -%}
+                        <b>{{ row.offer_term }}:</b> {{ row.value }}
+                    {%- endfor -%}
+                {%- endif -%}
+
+
+                <!-- job offer content continues -->
+                        <br>
+                <h2 style="text-align: center; text-decoration: underline;"><b >ለሚመለከተው ሁሉ</b></h2>
+                <br> 
+                የኤጀንሲው የስራ ባልደረባ የሆኑት አቶ/ወ/ሮ/ወ/ሪት {{doc.employee_name}} የስራ ልምድ ማስረጃ እንዲሰጣቸው በ
+                {{doc.internal_work_history[-1].to_date_ec}}<br>
+                ዓ.ም በጻፉት ማመልከቻ ጠይቀዋል።
+                <br/>
+                <br/>
+                {% if doc.external_work_history|length > 0 %}
+                <h5 style="text-decoration: underline;"><b>በሌላ መስሪያ ቤት ያላቸው ልምድ</b></h5>
+                <table class="table table-bordered">
+                    <tbody>
+                        <tr>
+                            <th>አሰሪ መስሪያ</th>
+                            <th>የስራ መደብ</th>
+                            <th>ከ ቀን</th>
+                            <th class="text-right">እስከ ቀን</th>
+                            <th class="text-right">ልምድ</th>
+                        </tr>
+                        {%- for row in doc.external_work_history -%}
+                        <tr>
+                            <td style="width: 3%;">{{ row.company_name }}</td>
+                            <td style="width: 3%;">{{ row.designation }}</td>
+                            <td style="width: 3%;">{{ row.from_date_ec }}</td>
+                            <td style="width: 3%;">{{ row.to_date_ec }}</td>
+                            <td style="width: 3%;">{{ row.total_experience }}</td>
+                        </tr>
+                        {%- endfor -%}
+                    </tbody>
+                </table>
+                <p style="text-align: right; padding-bottom: 10px;"><b>ጠቅላላ ድምር፡ {{doc.total_previous_experience}}</b></p>
+            {% endif %}
+            {% if doc.internal_work_history|length > 0 %}
+
+			<h5 style="text-decoration: underline;"><b>በዚህ መስሪያ ቤት ያላቸው ልምድ</b></h5>
+			<table class="table table-bordered">
+				<tbody>
+					<tr>
+						<th>ቅርንጫፍ</th>
+						<th>ፕሮጀክት</th>
+						<th>የስራ ክፍል</th>
+						<th>የስራ  መደብ</th>
+						<th>ከ ቀን</th>
+						<th class="text-right">እስከ ቀን</th>
+						<th class="text-right">ልምድ</th>
+					</tr>
+                    {% for i in range(doc.internal_work_history|length) %}
+                    <tr>
+                        <td style="width: 3%;">{{ doc.internal_work_history[i].branch if doc.internal_work_history[i].branch else doc.internal_work_history[i-1].branch if i > 0 and doc.internal_work_history[i-1].branch else '' }}</td>
+                        <td style="width: 3%;">{{ doc.internal_work_history[i].project if doc.internal_work_history[i].project else doc.internal_work_history[i-1].project if i > 0 and doc.internal_work_history[i-1].project else '' }}</td>
+                        <td style="width: 3%;">{{ doc.internal_work_history[i].department if doc.internal_work_history[i].department else doc.internal_work_history[i-1].department if i > 0 and doc.internal_work_history[i-1].department else '' }}</td>
+                        <td style="width: 3%;">{{ doc.internal_work_history[i].designation if doc.internal_work_history[i].designation else doc.internal_work_history[i-1].designation if i > 0 and doc.internal_work_history[i-1].designation else '' }}</td>
+                        <td style="width: 3%;">{{ doc.internal_work_history[i].from_date_ec if doc.internal_work_history[i].from_date_ec else '' }}</td>
+                        <td style="width: 3%;">{{ doc.internal_work_history[i].to_date_ec if doc.internal_work_history[i].to_date_ec else '' }}</td>
+                        <td style="width: 3%;">{{ doc.internal_work_history[i].total_experience if doc.internal_work_history[i].total_experience else '' }}</td>
+                    </tr>
+                {%- endfor -%}
+                
+                
+                
+				</tbody>
+			</table>
+            <p style="text-align: right; padding-bottom: 10px;"><b>ጠቅላላ  ድምር ፡ {{doc.total_current_experience}}</b></p>
+            {% endif %}
+            <p style=" padding-bottom: 10px;"><b>ጠቅላላ የአገልግሎት ዘመን ፡ {{doc.grand_total_experience}}</b></p>
+            <p>የስራ መደብ ያልተጣራ ደመወዝ ብር  {{doc.salary}} ({{doc.word_salary}}) እየተከፈላቸው በኤጀንሲው በመስራት ላይ የሚገኙ መሆኑን እየገለጽን በአሰሪና ስራተኛ ጉዳይ አዋጅ ቁጥር 1156/11 አንቀጽ 12/8 እና በህብረት ስምምነቱ መሰረት ይህ የስራ ልምድ የተሰጣቸው ሲሆን በዚህ አገልግሎት ዘመን ውስጥ በደመወዛቸው መጠን ተገቢውን የመንግስት የስራ ግብር በየወሩ ከደመወዛቸው ላይ እየተቀነሰ ለመንግስት ገቢ የተደረገ መሆኑን እናረጋግጣለን።</p>
+              
+                <br><br>
+                <p style="text-align: right;">ከሰላምታ ጋር</p>
+
+                <br><br>
+
+                <p class="strong">
+
+
+                <br><br><br><br>
+
+
+
+                <br>
+
+
+                <!-- job offer content ends here -->
+
+            </p>
+        </div>
+
+    </div>
+
+    <div class="footer">
+        {{ footer }}
+    </div>
+
+</body>
+</html>

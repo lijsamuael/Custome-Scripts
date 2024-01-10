@@ -93,35 +93,3 @@ frappe.ui.form.on("Material Request", {
 //   });
 //  }
 // });
-
-
-frappe.ui.form.on("Material Request", {
-    cannibalization_id: function(frm, cdt, cdn) {
-        console.log("i am here")
-        frappe.call({
-            method: "frappe.client.get_list",
-            args: {
-                doctype: 'parts',
-                filters: {
-                    parent: frm.doc.cannibalization_id
-                },
-                fields: ['*']
-            },
-            callback: function(response) {
-                if(response.message){
-                    console.log("the response message is",response.message) 
-                    frm.doc.items = [];
-                    response.message.map((row) => {
-                        var table = frm.add_child("items");
-                        table.item_name = row.description;
-                        table.qty = row.qty;
-                        table.uom = row.uom;
-                    })
-                    frm.refresh_field("items")
-        
-                }
-            }
-        });
-   }
-});
-

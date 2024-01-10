@@ -3,14 +3,149 @@ cur_frm.add_fetch('activity', 'direct_cost_after_conversion', 'rate');
 cur_frm.add_fetch('activity', 'unit', 'uom');
 cur_frm.add_fetch('activity', 'subject', 'activity_name');
 cur_frm.add_fetch('activity', 'productivity', 'productivity');
-cur_frm.add_fetch('activity', 'duration', 'duration');
+cur_frm.add_fetch('activity', 'duration_in_days', 'duration');
 
 
 
 frappe.ui.form.on('Operational Plan', {
 	onload: function(frm) {
 		console.log("abe", frm.doc.no)
-		addRowToCPT(frm);
+		if (!frm.doc.no) {
+			addRowToCPT(frm);
+
+		}
+	}
+});
+
+
+frappe.ui.form.on('Operational Plan', {
+    cal_equip: function(frm, cdt, cdn) {
+		console.log("test 1")
+        var total = 0;
+        frm.doc.machinery.map((row) => {
+            total += row.total_hourly_cost;
+        })
+        frm.doc.equipment_total_cost = total;
+        frm.refresh_field("equipment_total_cost")
+	},
+    cal_mat: function(frm, cdt, cdn) {
+		console.log("test 1")
+        var total = 0;
+        frm.doc.material1.map((row) => {
+            total += row.total_cost;
+        })
+        frm.doc.material_total_cost = total;
+        frm.refresh_field("material_total_cost")
+	}
+});
+
+
+
+frappe.ui.form.on('Operational Plan Detail', {
+	before_task_list_remove: function(frm, cdt, cdn) {
+		var row = locals[cdt][cdn];
+		var removed_activity = row.activity;
+		console.log("removed task id", removed_activity);
+
+		var operational_plan_detail_one1 = frm.doc.operational_plan_detail_one;
+		var operational_plan_detail_two2 = frm.doc.operational_plan_detail_two;
+
+		deleteRow(frm, removed_activity, "operational_plan_detail_one");
+		deleteRow(frm, removed_activity, "operational_plan_detail_two");
+
+		deleteRow(frm, removed_activity, "machinery");
+		deleteRow(frm, removed_activity, "manpower1");
+		deleteRow(frm, removed_activity, "material1");
+
+
+
+	}
+});
+
+function deleteRow(frm, removed_activity, childTable) {
+	var table = frm.doc[childTable];
+	for (var i = 0; i < table.length; i++) {
+		if (table[i].activity === removed_activity) {
+			// Remove the row from the child table
+			console.log("removed")
+			table.splice(i, 1);
+			// Update the form
+			frm.refresh_field(childTable);
+		}
+	}
+}
+
+
+
+frappe.ui.form.on("Operational Plan", {
+	project: function(frm, cdt, cdn) {
+		if (frm.doc.project) {
+			var d = locals[cdt][cdn];
+			frm.set_query("activity", "task_list", function() {
+				return {
+					"filters": {
+						"project": frm.doc.project,
+						"is_group": 0
+					}
+				}
+			});
+
+			frm.set_query("activity", "activity_sequencing", function() {
+				return {
+					"filters": {
+						"project": frm.doc.project,
+						"is_group": 0
+					}
+				}
+			});
+		}
+	},
+	onload: function(frm, cdt, cdn) {
+		if (frm.doc.project) {
+			var d = locals[cdt][cdn];
+			frm.set_query("activity", "task_list", function() {
+				return {
+					"filters": {
+						"project": frm.doc.project,
+						"is_group": 0
+					}
+				}
+			});
+
+			frm.set_query("activity", "activity_sequencing", function() {
+				return {
+					"filters": {
+						"project": frm.doc.project,
+						"is_group": 0
+					}
+				}
+			});
+		}
+	}
+});
+
+
+//preventing assigning  a planed quantity which is greter than the remining
+frappe.ui.form.on('Operational Plan Detail', {
+	planned: function(frm, cdt, cdn) {
+		var row = locals[cdt][cdn];
+		console.log("duration", frm.doc.duration_in_days)
+		console.log("calculation", ((row.planned * row.duration) / (row.quantity)))
+		if (row.planned > row.quantity) {
+			row.planned = null;
+			frappe.show_alert("Please select lower amount of quantity. It can not be done with the specidied day duration!")
+		} else if (((row.planned * row.duration) / (row.quantity)) > frm.doc.duration_in_days) {
+			console.log("i am hereeee")
+			row.planned = null;
+			frappe.show_alert("Please select lower amount of quantity. It can not be done with the specidied operational task duration!")
+		}
+		else {
+			row.planned_day = (row.planned * row.duration) / (row.quantity);
+			console.log("ppppppppppppppp", row.planned_day, row.planned_day)
+			frm.refresh_field("task_list");
+			AutoPopulate(frm, cdt, cdn);
+		}
+		frm.refresh_field("task_list")
 	}
 });
 
@@ -249,18 +384,18 @@ function addRowToCPT(frm, cdt, cdn) {
 	frm.set_value("no", []);
 
 	var tableRow1 = frappe.model.add_child(frm.doc, "No of working days", "no");
-	tableRow1.sep = 26;
-	tableRow1.oct = 26;
-	tableRow1.nov = 26;
-	tableRow1.dec = 26;
-	tableRow1.jan = 26;
-	tableRow1.feb = 26;
-	tableRow1.mar = 26;
-	tableRow1.apr = 26;
-	tableRow1.may = 26;
-	tableRow1.jun = 26;
-	tableRow1.july = 26;
-	tableRow1.aug = 26;
+	tableRow1.sep = 30;
+	tableRow1.oct = 30;
+	tableRow1.nov = 30;
+	tableRow1.dec = 30;
+	tableRow1.jan = 30;
+	tableRow1.feb = 30;
+	tableRow1.mar = 30;
+	tableRow1.apr = 30;
+	tableRow1.may = 30;
+	tableRow1.jun = 30;
+	tableRow1.july = 30;
+	tableRow1.aug = 30;
 
 	console.log("table row", tableRow1)
 
@@ -283,7 +418,7 @@ frappe.ui.form.on('Holidayss', {
 			var start_date = frappe.datetime.str_to_obj(child.from_date);
 			var end_date = frappe.datetime.str_to_obj(child.to_date);
 
-			var day_diff = end_date.getDate() - start_date.getDate();
+			var day_diff = end_date.getDate() - start_date.getDate() + 1;
 			child.total = Math.ceil(day_diff);
 
 			var month_number = start_date.getMonth() + 1; // Adding 1 because getMonth() returns zero-based month (0 for January)
@@ -305,43 +440,53 @@ frappe.ui.form.on('Holidayss', {
 			var start_date = frappe.datetime.str_to_obj(child.from_date);
 			var end_date = frappe.datetime.str_to_obj(child.to_date);
 
-			var day_diff = end_date.getDate() - start_date.getDate();
+			var day_diff = end_date.getDate() - start_date.getDate() + 1;
 
-			child.total = Math.ceil(day_diff);
 
 			var month_number = start_date.getMonth() + 1; // Adding 1 because getMonth() returns zero-based month (0 for January)
+			var month_number2 = end_date.getMonth() + 1;
 			child.month = month_number;
-			console.log("month", child.month)
+			console.log("month number 1", month_number)
+			console.log("month number 2", month_number2)
 
 
-			if (month_totals[child.month]) {
-				month_totals[child.month] += child.total;
+			if (month_number == month_number2) {
+				child.total = Math.ceil(day_diff);
+				if (month_totals[child.month]) {
+					month_totals[child.month] += child.total;
+				} else {
+					month_totals[child.month] = child.total;
+				}
+
+				console.log("month", month_totals)
+				console.log("no", frm.doc.no)
+
+				frm.doc.no[0].sep = 30 - (month_totals[9] || 0);  // September
+				frm.doc.no[0].oct = 30 - (month_totals[10] || 0); // October
+				frm.doc.no[0].nov = 30 - (month_totals[11] || 0); // November
+				frm.doc.no[0].dec = 30 - (month_totals[12] || 0); // December
+				frm.doc.no[0].jan = 30 - (month_totals[1] || 0);  // January
+				frm.doc.no[0].feb = 30 - (month_totals[2] || 0);  // February
+				frm.doc.no[0].mar = 30 - (month_totals[3] || 0);  // March
+				frm.doc.no[0].apr = 30 - (month_totals[4] || 0);  // April
+				frm.doc.no[0].may = 30 - (month_totals[5] || 0);  // May
+				frm.doc.no[0].jun = 30 - (month_totals[6] || 0);  // June
+				frm.doc.no[0].july = 30 - (month_totals[7] || 0); // July
+				frm.doc.no[0].aug = 30 - (month_totals[8] || 0);  // August
+
+				frm.refresh_field("no")
+				console.log("sth", frm.doc.no[0])
+
+				frm.refresh_field("holiday")
+
+
 			} else {
-				month_totals[child.month] = child.total;
+				frappe.show_alert("The month of the from date and the to date should be the same. Otherwise use additonal rows to add separetely")
+				child.to_date = null;
+				frm.refresh_field("holiday")
+
 			}
 
-			console.log("month", month_totals)
-			console.log("no", frm.doc.no)
-
-			frm.doc.no[0].sep = 26 - (month_totals[9] || 0);  // September
-			frm.doc.no[0].oct = 26 - (month_totals[10] || 0); // October
-			frm.doc.no[0].nov = 26 - (month_totals[11] || 0); // November
-			frm.doc.no[0].dec = 26 - (month_totals[12] || 0); // December
-			frm.doc.no[0].jan = 26 - (month_totals[1] || 0);  // January
-			frm.doc.no[0].feb = 26 - (month_totals[2] || 0);  // February
-			frm.doc.no[0].mar = 26 - (month_totals[3] || 0);  // March
-			frm.doc.no[0].apr = 26 - (month_totals[4] || 0);  // April
-			frm.doc.no[0].may = 26 - (month_totals[5] || 0);  // May
-			frm.doc.no[0].jun = 26 - (month_totals[6] || 0);  // June
-			frm.doc.no[0].july = 26 - (month_totals[7] || 0); // July
-			frm.doc.no[0].aug = 26 - (month_totals[8] || 0);  // August
-			frm.refresh_field("no")
-			console.log("sth", frm.doc.no[0])
-
-			frm.refresh_field("holiday")
-
-
-			frm.refresh_field("holiday")
 		}
 	}
 });
@@ -349,7 +494,23 @@ frappe.ui.form.on('Holidayss', {
 
 
 
+frappe.ui.form.on('Operational Plan', {
+	end_date_ec: function(frm) {
+		if (frm.doc.end_date_ec) {
+			var finalgc = convertDateTOGC(frm.doc.end_date_ec.toString());
+			frm.doc.end_date = finalgc;
+			frm.refresh_field("end_date")
+		}
 
+	},
+	start_date_ec: function(frm) {
+		if (frm.doc.start_date_ec) {
+			var finalgc = convertDateTOGC(frm.doc.start_date_ec.toString());
+			frm.doc.start_date = finalgc;
+			frm.refresh_field("start_date")
+		}
+	}
+});
 
 
 
@@ -369,6 +530,7 @@ frappe.ui.form.on('Operational Plan', {
 
 			var year_diff_decimal = total_months / 12;
 			frm.set_value('duration', year_diff_decimal.toFixed(2));
+			frm.set_value('duration_in_days', total_months * 30);
 			console.log("duration", year_diff_decimal.toFixed(2));
 			frm.refresh_field("duration")
 		}
@@ -565,28 +727,28 @@ function AutoPopulate(frm, cdt, cdn) {
 	var d = locals[cdt][cdn];
 	var activity = frappe.model.get_value(d.doctype, d.name, "activity");
 
-	if (activity && date1 && date2) {
-		frappe.call({
-			method: "erpnext.timesheet_sum_of_executed_qty.get_executed_quantity_from_timesheet",
-			args: { activity: activity, date1: date1, date2: date2 }
-		}).done((r) => {
-			if (r.message.length >= 1)
-				if (r.message[0]) {
+	// if (activity && date1 && date2) {
+	// 	frappe.call({
+	// 		method: "erpnext.timesheet_sum_of_executed_qty.get_executed_quantity_from_timesheet",
+	// 		args: { activity: activity, date1: date1, date2: date2 }
+	// 	}).done((r) => {
+	// 		if (r.message.length >= 1)
+	// 			if (r.message[0]) {
 
-					var to_date_executed = r.message[0];
-					frappe.model.set_value(d.doctype, d.name, "to_date_executed", parseFloat(to_date_executed));
-					var quantity = frappe.model.get_value(d.doctype, d.name, "quantity");
-					var rate = frappe.model.get_value(d.doctype, d.name, "rate");
-					var amount = quantity * rate;
-					var remaining_planned_qty = quantity - parseFloat(to_date_executed);
-					frappe.model.set_value(d.doctype, d.name, "remaining_planned_qty", remaining_planned_qty);
-					frappe.model.set_value(d.doctype, d.name, "amount", amount);
+	// 				var to_date_executed = r.message[0];
+	// 				frappe.model.set_value(d.doctype, d.name, "to_date_executed", parseFloat(to_date_executed));
+	// 				var quantity = frappe.model.get_value(d.doctype, d.name, "quantity");
+	// 				var rate = frappe.model.get_value(d.doctype, d.name, "rate");
+	// 				var amount = quantity * rate;
+	// 				var remaining_planned_qty = quantity - parseFloat(to_date_executed);
+	// 				frappe.model.set_value(d.doctype, d.name, "remaining_planned_qty", remaining_planned_qty);
+	// 				frappe.model.set_value(d.doctype, d.name, "amount", amount);
 
-				}
-		})
+	// 			}
+	// 	})
 
-		refresh_field("to_date_executed");
-	}
+	// 	refresh_field("to_date_executed");
+	// }
 
 	frm.doc.operational_plan_detail_one = []
 	frm.doc.operational_plan_detail_two = []
@@ -601,8 +763,6 @@ function AutoPopulate(frm, cdt, cdn) {
 
 	var allMachinesMap = new Map();
 
-
-
 	var grand_total_cost_for_machinary = 0;
 	var number_of_items_for_machinary = 0;
 	var sum_of_unit_rate_for_machinary = 0;
@@ -615,7 +775,9 @@ function AutoPopulate(frm, cdt, cdn) {
 	var number_of_items_for_material = 0;
 	var sum_of_unit_rate_for_material = 0;
 
+
 	allMachinesMap.clear();
+
 
 	var task_lists = frm.doc.task_list;
 	$.each(task_lists, function(_i, eMain) {
@@ -649,8 +811,7 @@ function AutoPopulate(frm, cdt, cdn) {
 					entry.uf = e.uf;
 					entry.efficency = e.efficency;
 					entry.rental_rate = e.rental_rate;
-					number_of_items_for_machinary += 1;
-					sum_of_unit_rate_for_machinary += entry.rental_rate;
+					
 
 
 					//fetching the quantity from the database
@@ -670,54 +831,47 @@ function AutoPopulate(frm, cdt, cdn) {
 
 							console.log("uf ", entry.uf, "eff ", entry.efficency, "qty ", entry.qty, "item no ", entry.equp_no, "prod", entry.productivity)
 							entry.equp_hr = (entry.uf * entry.efficency * entry.qty * entry.equp_no) / entry.productivity;
-							grand_total_cost_for_machinary += entry.qty * entry.rental_rate;
 
 							entry.total_hourly_cost = entry.qty * entry.rental_rate;
+							grand_total_cost_for_machinary += entry.qty * entry.rental_rate;
+							frm.doc.equipment_total_cost = grand_total_cost_for_machinary;
+							console.log("graaaaaaaaaaaaaaaaaaaaaaaaaaand machinery", grand_total_cost_for_machinary)
+							frm.refresh_field("equipment_total_cost")
+
 							frm.refresh_field("machinery")
 
 						}
 					})
 
-					if (allMachinesMap.has(e.id_mac)) {
 
-						var existingVal = allMachinesMap.get(entry.id_mac);
-						existingVal.qty += (entry.qty);
-						existingVal.total_hourly_cost += (entry.total_hourly_cost);
-						allMachinesMap.set(entry.id_mac, existingVal);
-					}
-					else {
+					if (!frm.doc.machinary_detail_summarized_by_month_section_a) {
 
-						var newEntrySummerized = frm.add_child("machinery_detail_summerized");
-						newEntrySummerized.id_mac = e.id_mac;
-						newEntrySummerized.type = e.type;
-						newEntrySummerized.qty = e.qty * planned_qty;
-						newEntrySummerized.uf = e.uf;
-						newEntrySummerized.efficency = e.efficency;
-						newEntrySummerized.rental_rate = e.rental_rate;
-						newEntrySummerized.total_hourly_cost = entry.qty * entry.rental_rate;
-						allMachinesMap.set(e.id_mac, newEntrySummerized);
-
+						console.log("first");
 						var machinery_exist1 = false;
 						var machinery_exist2 = false;
+						console.log("operational plan detail one", frm.doc.operational_plan_detail_one, frm.doc.operational_plan_detail_one.length)
 
-						$.each(frm.doc.operational_plan_detail_one, function(index, row) {
-							console.log("matttttttttttttttt eee", e)
-							console.log("matttttttttttttttt  row", row)
+						if (frm.doc.operational_plan_detail_one.length > 0) {
+							console.log("i am here")
+							frm.doc.operational_plan_detail_one((row, index) => {
+								console.log("machinery eee", e)
+								console.log("machinery  row", row)
 
-							if (row.activity === e.id_mac) {
-								machinery_exist1 = true;
-								return false; // Exit the loop if activity is found
-							}
-						});
-						$.each(frm.doc.operational_plan_detail_one, function(index, row) {
-							if (row.activity === e.parent) {
-								machinery_exist2 = true;
-								return false; // Exit the loop if activity is found
-							}
-						});
+								if (row.activity === e.parent) {
+									machinery_exist1 = true;
+									machinery_exist2 = true;
+									return false; // Exit the loop if activity is found
+								}
+							})
+						}
+						else {
+							console.log("I am not here")
+						}
+
 
 						console.log("machinery exist 1", machinery_exist1)
 						console.log("machinery exist 2", machinery_exist2)
+
 
 						if (!machinery_exist1) {
 							var newEntrySummerized_section_a = frm.add_child("machinary_detail_summarized_by_month_section_a");
@@ -725,6 +879,32 @@ function AutoPopulate(frm, cdt, cdn) {
 							newEntrySummerized_section_a.activity = e.parent;
 
 							newEntrySummerized_section_a.type = e.type;
+
+							var newEntrySummerized_section_a_qty = frm.add_child("operational_plan_machinery_detail_summarized_one_qty"); var newEntrySummerized_section_b_qty = frm.add_child("operational_plan_machinery_detail_summarized_two_qty");
+
+							newEntrySummerized_section_a_qty.id_mac = e.id_mac;
+							newEntrySummerized_section_b_qty.id_mac = e.id_mac;
+
+							newEntrySummerized_section_a_qty.activity = e.parent;
+							newEntrySummerized_section_b_qty.activity = e.parent;
+
+
+							newEntrySummerized_section_a_qty.type = e.type;
+							newEntrySummerized_section_b_qty.type = e.type;
+
+
+							var newEntrySummerized_section_a_cost = frm.add_child("operational_plan_machinery_detail_summarized_one_cost"); var newEntrySummerized_section_b_cost = frm.add_child("operational_plan_machinery_detail_summarized_two_cost");
+
+							newEntrySummerized_section_a_cost.id_mac = e.id_mac;
+							newEntrySummerized_section_b_cost.id_mac = e.id_mac;
+
+							newEntrySummerized_section_a_cost.activity = e.parent;
+							newEntrySummerized_section_b_cost.activity = e.parent;
+
+
+							newEntrySummerized_section_a_cost.type = e.type;
+							newEntrySummerized_section_b_cost.type = e.type;
+
 						}
 
 
@@ -736,17 +916,85 @@ function AutoPopulate(frm, cdt, cdn) {
 							newEntrySummerized_section_b.type = e.type;
 						}
 					}
+					else {
+						console.log("second")
+
+						var machinery_exist = false;
+
+
+						$.each(frm.doc.machinary_detail_summarized_by_month_section_a, function(index, row) {
+							if (row.id_mac === e.id_mac) {
+								machinery_exist = true;
+								return false; // Exit the loop if manpower entry is found
+							}
+						});
+
+						if (!machinery_exist) {
+
+							var machinery_exist1 = false;
+							var machinery_exist2 = false;
+							console.log("eeeeeee2", e);
+							$.each(frm.doc.operational_plan_detail_one, function(index, row) {
+								if (row.activity === e.parent) {
+									machinery_exist1 = true;
+									machinery_exist2 = true;
+									return false; // Exit the loop if activity is found
+								}
+							});
+
+
+							if (!machinery_exist1) {
+								var newEntrySummerized_section_a = frm.add_child("machinary_detail_summarized_by_month_section_a");
+								newEntrySummerized_section_a.id_mac = e.id_mac;
+								newEntrySummerized_section_a.activity = e.parent;
+
+								newEntrySummerized_section_a.type = e.type;
+
+								var newEntrySummerized_section_a_qty = frm.add_child("operational_plan_machinery_detail_summarized_one_qty"); var newEntrySummerized_section_b_qty = frm.add_child("operational_plan_machinery_detail_summarized_two_qty");
+
+								newEntrySummerized_section_a_qty.id_mac = e.id_mac;
+								newEntrySummerized_section_b_qty.id_mac = e.id_mac;
+
+								newEntrySummerized_section_a_qty.activity = e.parent;
+								newEntrySummerized_section_b_qty.activity = e.parent;
+
+
+								newEntrySummerized_section_a_qty.type = e.type;
+								newEntrySummerized_section_b_qty.type = e.type;
+
+
+								var newEntrySummerized_section_a_cost = frm.add_child("operational_plan_machinery_detail_summarized_one_cost"); var newEntrySummerized_section_b_cost = frm.add_child("operational_plan_machinery_detail_summarized_two_cost");
+
+								newEntrySummerized_section_a_cost.id_mac = e.id_mac;
+								newEntrySummerized_section_b_cost.id_mac = e.id_mac;
+
+								newEntrySummerized_section_a_cost.activity = e.parent;
+								newEntrySummerized_section_b_cost.activity = e.parent;
+
+
+								newEntrySummerized_section_a_cost.type = e.type;
+								newEntrySummerized_section_b_cost.type = e.type;
+							}
+
+							if (!machinery_exist2) {
+								var newEntrySummerized_section_b = frm.add_child("machinary_detail_summarized_by_month_section_b");
+								newEntrySummerized_section_b.id_mac = e.id_mac;
+								newEntrySummerized_section_b.activity = e.parent;
+
+								newEntrySummerized_section_b.type = e.type;
+							}
+						} else {
+							console.log("it alredy exists")
+						}
+					}
+
+
+
 
 				})
-
 				frm.doc.equipment_total_cost = grand_total_cost_for_machinary;
-				frm.doc.equipment_unit_rate = (sum_of_unit_rate_for_machinary / number_of_items_for_machinary);
-
-
-				allMachinesMap.forEach(function(val, key) {
-
-
-				})
+				console.log("graaaaaaaaaaaaaaaaaaaaaaaaaaand machinery", grand_total_cost_for_machinary)
+				frm.refresh_field("equipment_total_cost")
 
 				refresh_field("machinery");
 				refresh_field("equipment_total_cost");
@@ -754,6 +1002,11 @@ function AutoPopulate(frm, cdt, cdn) {
 				refresh_field("machinery_detail_summerized");
 				refresh_field("machinary_detail_summarized_by_month_section_a");
 				refresh_field("machinary_detail_summarized_by_month_section_b");
+				refresh_field("operational_plan_machinery_detail_summarized_one_qty");
+				refresh_field("operational_plan_machinery_detail_summarized_two_qty");
+				refresh_field("operational_plan_machinery_detail_summarized_one_cost");
+				refresh_field("operational_plan_machinery_detail_summarized_two_cost");
+
 			})
 		}
 
@@ -776,6 +1029,7 @@ function AutoPopulate(frm, cdt, cdn) {
 					entry.li_permanent = e.li_permanent;
 					entry.hourly_cost = e.hourly_cost;
 					grand_total_cost_for_manpower += entry.qty * entry.hourly_cost;
+				console.log("graaaaaaaaaaaaaaaaaaaaaaaaaand total for manpower beforee:", entry.qty, entry.hourly_cost)
 					number_of_items_for_manpower += 1;
 					sum_of_unit_rate_for_manpower += entry.hourly_cost;
 					entry.total_hourly_cost = entry.qty * entry.hourly_cost;
@@ -807,11 +1061,12 @@ function AutoPopulate(frm, cdt, cdn) {
 					})
 
 					if (!frm.doc.manpower_detail_summarized_by_month_section_a) {
-						console.log("first")
+						console.log("first man")
 						var manpower_exist1 = false;
 						var manpower_exist2 = false;
 						console.log("eeeeeee2", e);
 						$.each(frm.doc.operational_plan_detail_one, function(index, row) {
+							console.log("the code that is not executing")
 							if (row.activity === e.parent) {
 								manpower_exist1 = true;
 								return false; // Exit the loop if activity is found
@@ -834,6 +1089,33 @@ function AutoPopulate(frm, cdt, cdn) {
 							newEntrySummerized_section_a.activity = e.parent;
 
 							newEntrySummerized_section_a.job_title = e.job_title;
+
+
+							var newEntrySummerized_section_a_qty = frm.add_child("operational_plan_manpower_detail_summarized_one_qty"); var newEntrySummerized_section_b_qty = frm.add_child("operational_plan_manpower_detail_summarized_two_qty");
+
+							newEntrySummerized_section_a_qty.id_map = e.id_map;
+							newEntrySummerized_section_b_qty.id_map = e.id_map;
+
+							newEntrySummerized_section_a_qty.activity = e.parent;
+							newEntrySummerized_section_b_qty.activity = e.parent;
+
+
+							newEntrySummerized_section_a_qty.job_title = e.job_title;
+							newEntrySummerized_section_b_qty.job_title = e.job_title;
+
+
+							var newEntrySummerized_section_a_cost = frm.add_child("operational_plan_manpower_detail_summarized_one_cost"); var newEntrySummerized_section_b_cost = frm.add_child("operational_plan_manpower_detail_summarized_two_cost");
+
+							newEntrySummerized_section_a_cost.id_map = e.id_map;
+							newEntrySummerized_section_b_cost.id_map = e.id_map;
+
+							newEntrySummerized_section_a_cost.activity = e.parent;
+							newEntrySummerized_section_b_cost.activity = e.parent;
+
+
+							newEntrySummerized_section_a_cost.job_title = e.job_title;
+							newEntrySummerized_section_b_cost.job_title = e.job_title;
+
 						}
 
 						if (!manpower_exist2) {
@@ -891,6 +1173,32 @@ function AutoPopulate(frm, cdt, cdn) {
 								newEntrySummerized_section_a.activity = e.parent;
 
 								newEntrySummerized_section_a.job_title = e.job_title;
+
+
+								var newEntrySummerized_section_a_qty = frm.add_child("operational_plan_manpower_detail_summarized_one_qty"); var newEntrySummerized_section_b_qty = frm.add_child("operational_plan_manpower_detail_summarized_two_qty");
+
+								newEntrySummerized_section_a_qty.id_map = e.id_map;
+								newEntrySummerized_section_b_qty.id_map = e.id_map;
+
+								newEntrySummerized_section_a_qty.activity = e.parent;
+								newEntrySummerized_section_b_qty.activity = e.parent;
+
+
+								newEntrySummerized_section_a_qty.job_title = e.job_title;
+								newEntrySummerized_section_b_qty.job_title = e.job_title;
+
+
+								var newEntrySummerized_section_a_cost = frm.add_child("operational_plan_manpower_detail_summarized_one_cost"); var newEntrySummerized_section_b_cost = frm.add_child("operational_plan_manpower_detail_summarized_two_cost");
+
+								newEntrySummerized_section_a_cost.id_map = e.id_map;
+								newEntrySummerized_section_b_cost.id_map = e.id_map;
+
+								newEntrySummerized_section_a_cost.activity = e.parent;
+								newEntrySummerized_section_b_cost.activity = e.parent;
+
+
+								newEntrySummerized_section_a_cost.job_title = e.job_title;
+								newEntrySummerized_section_b_cost.job_title = e.job_title;
 							}
 
 							if (!manpower_exist2) {
@@ -916,6 +1224,7 @@ function AutoPopulate(frm, cdt, cdn) {
 
 
 				frm.doc.man_power_total_cost = grand_total_cost_for_manpower;
+				console.log("graaaaaaaaaaaaaaaaaaaaaaaaaand total for manpower:", grand_total_cost_for_manpower)
 				frm.doc.man_power_unit_rate = (sum_of_unit_rate_for_manpower / number_of_items_for_manpower);
 
 				refresh_field("manpower1");
@@ -924,6 +1233,10 @@ function AutoPopulate(frm, cdt, cdn) {
 				refresh_field("manpower_detail_summerized");
 				refresh_field("manpower_detail_summarized_by_month_section_a");
 				refresh_field("manpower_detail_summarized_by_month_section_b");
+				refresh_field("operational_plan_manpower_detail_summarized_one_qty");
+				refresh_field("operational_plan_manpower_detail_summarized_two_qty");
+				refresh_field("operational_plan_manpower_detail_summarized_one_cost");
+				refresh_field("operational_plan_manpower_detail_summarized_two_cost");
 			})
 		}
 
@@ -972,13 +1285,14 @@ function AutoPopulate(frm, cdt, cdn) {
 								entry.uf = e.uf;
 								entry.efficency = e.efficency;
 								entry.unit_price = e.unit_price;
-								grand_total_cost_for_material += entry.qty * entry.unit_price;
-								number_of_items_for_material += 1;
-								sum_of_unit_rate_for_material += entry.unit_price;
+
 								entry.total_cost = entry.qty * entry.unit_price;
 								entry.material_qty = entry.qty * entry.task_qty;
 								entry.material_no = entry.qty * entry.task_qty;
-
+								grand_total_cost_for_material += entry.qty * entry.unit_price;
+								frm.doc.material_total_cost = grand_total_cost_for_machinary;
+								console.log("graaaaaaaaaaaaaaaaaaaaaaaaaaand machinery", grand_total_cost_for_material)
+								frm.refresh_field("material_total_cost")
 
 								frm.refresh_field("material1")
 
@@ -1025,6 +1339,39 @@ function AutoPopulate(frm, cdt, cdn) {
 								newEntrySummerized_section_a.id_mat = e.id_mat;
 								newEntrySummerized_section_a.unit = e.uom;
 								newEntrySummerized_section_a.item = e.item1;
+
+
+
+								var newEntrySummerized_section_a_qty = frm.add_child("operational_plan_material_detail_summarized_one_qty"); var newEntrySummerized_section_b_qty = frm.add_child("operational_plan_material_detail_summarized_two_qty");
+
+								newEntrySummerized_section_a_qty.id_mat = e.id_mat;
+								newEntrySummerized_section_b_qty.id_mat = e.id_mat;
+
+								newEntrySummerized_section_a_qty.activity = e.parent;
+								newEntrySummerized_section_b_qty.activity = e.parent;
+
+
+								newEntrySummerized_section_a_qty.item = e.item1;
+								newEntrySummerized_section_b_qty.item = e.item1;
+
+								newEntrySummerized_section_a_qty.unit = e.uom;
+								newEntrySummerized_section_b_qty.unit = e.uom;
+
+
+								var newEntrySummerized_section_a_cost = frm.add_child("operational_plan_material_detail_summarized_one_cost"); var newEntrySummerized_section_b_cost = frm.add_child("operational_plan_material_detail_summarized_two_cost");
+
+								newEntrySummerized_section_a_cost.id_mat = e.id_mat;
+								newEntrySummerized_section_b_cost.id_mat = e.id_mat;
+
+								newEntrySummerized_section_a_cost.activity = e.parent;
+								newEntrySummerized_section_b_cost.activity = e.parent;
+
+
+								newEntrySummerized_section_a_cost.item = e.item1;
+								newEntrySummerized_section_b_cost.item = e.item1;
+
+								newEntrySummerized_section_a_cost.unit = e.uom;
+								newEntrySummerized_section_b_cost.unit = e.uom;
 							}
 
 							if (!material_exist2) {
@@ -1069,6 +1416,40 @@ function AutoPopulate(frm, cdt, cdn) {
 									newEntrySummerized_section_a.id_mat = e.id_mat;
 									newEntrySummerized_section_a.unit = e.uom;
 									newEntrySummerized_section_a.item = e.item1;
+
+
+
+									var newEntrySummerized_section_a_qty = frm.add_child("operational_plan_material_detail_summarized_one_qty"); var newEntrySummerized_section_b_qty = frm.add_child("operational_plan_material_detail_summarized_two_qty");
+
+									newEntrySummerized_section_a_qty.id_mat = e.id_mat;
+									newEntrySummerized_section_b_qty.id_mat = e.id_mat;
+
+									newEntrySummerized_section_a_qty.activity = e.parent;
+									newEntrySummerized_section_b_qty.activity = e.parent;
+
+
+									newEntrySummerized_section_a_qty.item = e.item1;
+									newEntrySummerized_section_b_qty.item = e.item1;
+
+									newEntrySummerized_section_a_qty.unit = e.uom;
+									newEntrySummerized_section_b_qty.unit = e.uom;
+
+
+									var newEntrySummerized_section_a_cost = frm.add_child("operational_plan_material_detail_summarized_one_cost"); var newEntrySummerized_section_b_cost = frm.add_child("operational_plan_material_detail_summarized_two_cost");
+
+									newEntrySummerized_section_a_cost.id_mat = e.id_mat;
+									newEntrySummerized_section_b_cost.id_mat = e.id_mat;
+
+									newEntrySummerized_section_a_cost.activity = e.parent;
+									newEntrySummerized_section_b_cost.activity = e.parent;
+
+
+									newEntrySummerized_section_a_cost.item = e.item1;
+									newEntrySummerized_section_b_cost.item = e.item1;
+
+									newEntrySummerized_section_a_cost.unit = e.uom;
+									newEntrySummerized_section_b_cost.unit = e.uom;
+
 								}
 
 								if (!material_exist2) {
@@ -1099,6 +1480,10 @@ function AutoPopulate(frm, cdt, cdn) {
 					refresh_field("material_detail_summerized");
 					refresh_field("material_detail_summarized_by_month_section_a");
 					refresh_field("material_detail_summarized_by_month_section_b");
+					refresh_field("operational_plan_material_detail_summarized_one_qty");
+					refresh_field("operational_plan_material_detail_summarized_two_qty");
+					refresh_field("operational_plan_material_detail_summarized_one_cost");
+					refresh_field("operational_plan_material_detail_summarized_two_cost");
 				}
 			})
 		}
@@ -1244,7 +1629,7 @@ frappe.ui.form.on("Operational Plan Detail", {
 		frm.refresh_field("task_list");
 		AutoPopulate(frm, cdt, cdn);
 
-		
+
 	}
 });
 
@@ -1397,6 +1782,7 @@ frappe.ui.form.on('Operational Plan', {
 
 function calculateMaterialValues(frm, cdt, cdn, m) {
 	var materialAggregatedValues = {};
+	var materialAggregatedValuesCost = {};
 
 	// Iterate through the material1 array
 	for (var i = 0; i < frm.doc.material1.length; i++) {
@@ -1418,27 +1804,64 @@ function calculateMaterialValues(frm, cdt, cdn, m) {
 			materialAggregatedValues[itemName] += activityMonthQuantity * materialItem.qty;
 		} else {
 			materialAggregatedValues[itemName] = activityMonthQuantity * materialItem.qty;
+		}
+
+		if (materialAggregatedValuesCost[itemName]) {
+			materialAggregatedValuesCost[itemName] += activityMonthQuantity * materialItem.qty * materialItem.unit_price;
+		} else {
+			materialAggregatedValuesCost[itemName] = activityMonthQuantity * materialItem.qty * materialItem.unit_price;
 		}
 	}
 	console.log("material aggregate", materialAggregatedValues);
 
 	for (var i = 0; i < frm.doc.material_detail_summarized_by_month_section_a.length; i++) {
 		var currentItem = frm.doc.material_detail_summarized_by_month_section_a[i];
+		var currentItemQty = frm.doc.operational_plan_material_detail_summarized_one_qty[i];
+		var currentItemCost = frm.doc.operational_plan_material_detail_summarized_one_cost[i];
+
 		console.log("cureiejireb", currentItem)
 		var itemName = currentItem.item;
 		var aggregatedValueForType = materialAggregatedValues[itemName];
 
 		if (aggregatedValueForType) {
+
+			var month_name =
+				m === "1" ? "jan" :
+					m === "2" ? "feb" :
+						m === "3" ? "mar" :
+							m === "4" ? "apr" :
+								m === "5" ? "may" :
+									m === "6" ? "jun" :
+										m === "7" ? "july" :
+											m === "8" ? "aug" :
+												m === "9" ? "sep" :
+													m === "10" ? "oct" :
+														m === "11" ? "nov" :
+															m === "12" ? "dec" :
+																null;
+			console.log("silkshn newa", materialAggregatedValuesCost)
 			currentItem["op_m_m" + m] = aggregatedValueForType;
+			currentItemQty["op_m_m" + m] = aggregatedValueForType / (8 * frm.doc.no[0][month_name]);
+			currentItemCost["op_m_m" + m] = materialAggregatedValuesCost[itemName]
+
+
 		} else {
 			currentItem["op_m_m" + m] = 0;
+			currentItemQty["op_m_m" + m] = 0;
+			currentItemCost["op_m_m" + m] = 0;
 		}
 	}
 
 	frm.refresh_field("material_detail_summarized_by_month_section_a");
+	frm.refresh_field("operational_plan_material_detail_summarized_one_qty");
+	frm.refresh_field("operational_plan_material_detail_summarized_one_cost");
+
+
 }
 function calculateMaterialValuesB(frm, cdt, cdn, m) {
 	var materialAggregatedValues = {};
+	var materialAggregatedValuesCost = {};
+
 
 	// Iterate through the material1 array
 	for (var i = 0; i < frm.doc.material1.length; i++) {
@@ -1449,6 +1872,8 @@ function calculateMaterialValuesB(frm, cdt, cdn, m) {
 
 		for (var j = 0; j < frm.doc.operational_plan_detail_two.length; j++) {
 			var monthData = frm.doc.operational_plan_detail_two[j];
+
+
 			if (monthData.activity == materialItem.activity) {
 				activityMonthQuantity = monthData["m_" + m] || 0;
 				break;
@@ -1461,27 +1886,58 @@ function calculateMaterialValuesB(frm, cdt, cdn, m) {
 		} else {
 			materialAggregatedValues[itemName] = activityMonthQuantity * materialItem.qty;
 		}
+
+		if (materialAggregatedValuesCost[itemName]) {
+			materialAggregatedValuesCost[itemName] += activityMonthQuantity * materialItem.qty * materialItem.unit_price;
+		} else {
+			materialAggregatedValuesCost[itemName] = activityMonthQuantity * materialItem.qty * materialItem.unit_price;
+		}
+
 	}
 	console.log("material aggregate", materialAggregatedValues);
 
 	for (var i = 0; i < frm.doc.material_detail_summarized_by_month_section_b.length; i++) {
 		var currentItem = frm.doc.material_detail_summarized_by_month_section_b[i];
+		var currentItemQty = frm.doc.operational_plan_material_detail_summarized_two_qty[i];
+		var currentItemCost = frm.doc.operational_plan_material_detail_summarized_two_cost[i];
 		console.log("cureiejireb", currentItem)
 		var itemName = currentItem.item;
 		var aggregatedValueForType = materialAggregatedValues[itemName];
 
 		if (aggregatedValueForType) {
+
+			var month_name =
+				m === "1" ? "jan" :
+					m === "2" ? "feb" :
+						m === "3" ? "mar" :
+							m === "4" ? "apr" :
+								m === "5" ? "may" :
+									m === "6" ? "jun" :
+										m === "7" ? "july" :
+											m === "8" ? "aug" :
+												m === "9" ? "sep" :
+													m === "10" ? "oct" :
+														m === "11" ? "nov" :
+															m === "12" ? "dec" :
+																null;
 			currentItem["op_m_m" + m] = aggregatedValueForType;
+			currentItemQty["op_m_m" + m] = aggregatedValueForType / (8 * frm.doc.no[0][month_name]);
+			currentItemCost["op_m_m" + m] = materialAggregatedValuesCost[itemName]
 		} else {
 			currentItem["op_m_m" + m] = 0;
+			currentItemQty["op_m_m" + m] = 0;
+			currentItemCost["op_m_m" + m] = 0;
 		}
 	}
 
 	frm.refresh_field("material_detail_summarized_by_month_section_b");
+	frm.refresh_field("operational_plan_material_detail_summarized_two_qty")
+	frm.refresh_field("operational_plan_material_detail_summarized_two_cost");
 }
 
 function calculateManpowerValues(frm, cdt, cdn, m) {
 	var manpowerAggregatedValues = {};
+	var manpowerAggregatedValuesCost = {};
 
 	// Iterate through the manpower array
 	for (var i = 0; i < frm.doc.manpower1.length; i++) {
@@ -1500,29 +1956,61 @@ function calculateManpowerValues(frm, cdt, cdn, m) {
 		console.log("monthe qunttity", activityMonthQuantity)
 
 		if (manpowerAggregatedValues[job_title]) {
-			manpowerAggregatedValues[job_title] += activityMonthQuantity * (manpowerItem.uf * manpowerItem.li_permanent * manpowerItem.labor_no) / manpowerItem.productivity;
+			manpowerAggregatedValues[job_title] += activityMonthQuantity * (manpowerItem.uf * manpowerItem.li_permanent * manpowerItem.mp_number) / manpowerItem.productivity;
 		} else {
-			manpowerAggregatedValues[job_title] = activityMonthQuantity * (manpowerItem.uf * manpowerItem.li_permanent * manpowerItem.labor_no) / manpowerItem.productivity;
+			manpowerAggregatedValues[job_title] = activityMonthQuantity * (manpowerItem.uf * manpowerItem.li_permanent * manpowerItem.mp_number) / manpowerItem.productivity;
+		}
+
+		if (manpowerAggregatedValuesCost[job_title]) {
+			manpowerAggregatedValuesCost[job_title] += activityMonthQuantity * (manpowerItem.uf * manpowerItem.li_permanent * manpowerItem.labor_no) / manpowerItem.productivity * manpowerItem.hourly_cost;
+		} else {
+			manpowerAggregatedValuesCost[job_title] = activityMonthQuantity * (manpowerItem.uf * manpowerItem.li_permanent * manpowerItem.labor_no) / manpowerItem.productivity * manpowerItem.hourly_cost;
 		}
 	}
-	console.log("manpoere aggrirgate", manpowerAggregatedValues);
+	console.log("manppppppppp aggrirgate", manpowerAggregatedValues);
 
 	for (var i = 0; i < frm.doc.manpower_detail_summarized_by_month_section_a.length; i++) {
 		var currentItem = frm.doc.manpower_detail_summarized_by_month_section_a[i];
+		var currentItemQty = frm.doc.operational_plan_manpower_detail_summarized_one_qty[i];
+		var currentItemCost = frm.doc.operational_plan_manpower_detail_summarized_one_cost[i];
+
 		var job_title = currentItem.job_title;
 		var aggregatedValueForType = manpowerAggregatedValues[job_title];
 
 		if (aggregatedValueForType) {
+			var month_name =
+				m === "1" ? "jan" :
+					m === "2" ? "feb" :
+						m === "3" ? "mar" :
+							m === "4" ? "apr" :
+								m === "5" ? "may" :
+									m === "6" ? "jun" :
+										m === "7" ? "july" :
+											m === "8" ? "aug" :
+												m === "9" ? "sep" :
+													m === "10" ? "oct" :
+														m === "11" ? "nov" :
+															m === "12" ? "dec" :
+																null;
+			console.log("silke", month_name, manpowerAggregatedValuesCost);
 			currentItem["op_mp_m" + m] = aggregatedValueForType;
+			currentItemQty["op_mp_m" + m] = aggregatedValueForType / (8 * frm.doc.no[0][month_name]);
+			currentItemCost["op_mp_m" + m] = manpowerAggregatedValuesCost[job_title]
 		} else {
 			currentItem["op_mp_m" + m] = 0;
+			currentItemQty["op_mp_m" + m] = 0;
+			currentItemCost["op_mp_m" + m] = 0;
 		}
 	}
 
 	frm.refresh_field("manpower_detail_summarized_by_month_section_a");
+	frm.refresh_field("operational_plan_manpower_detail_summarized_one_qty");
+	frm.refresh_field("operational_plan_manpower_detail_summarized_one_cost");
+
 }
 function calculateManpowerValuesB(frm, cdt, cdn, m) {
 	var manpowerAggregatedValues = {};
+	var manpowerAggregatedValuesCost = {};
 
 	// Iterate through the manpower array
 	for (var i = 0; i < frm.doc.manpower1.length; i++) {
@@ -1544,27 +2032,59 @@ function calculateManpowerValuesB(frm, cdt, cdn, m) {
 			manpowerAggregatedValues[job_title] += activityMonthQuantity * (manpowerItem.uf * manpowerItem.li_permanent * manpowerItem.labor_no) / manpowerItem.productivity;
 		} else {
 			manpowerAggregatedValues[job_title] = activityMonthQuantity * (manpowerItem.uf * manpowerItem.li_permanent * manpowerItem.labor_no) / manpowerItem.productivity;
+		}
+
+		if (manpowerAggregatedValuesCost[job_title]) {
+			manpowerAggregatedValuesCost[job_title] += activityMonthQuantity * (manpowerItem.uf * manpowerItem.li_permanent * manpowerItem.labor_no) / manpowerItem.productivity * manpowerItem.hourly_cost;
+		} else {
+			manpowerAggregatedValuesCost[job_title] = activityMonthQuantity * (manpowerItem.uf * manpowerItem.li_permanent * manpowerItem.labor_no) / manpowerItem.productivity * manpowerItem.hourly_cost;
 		}
 	}
 	console.log("manpoere aggrirgate", manpowerAggregatedValues);
 
 	for (var i = 0; i < frm.doc.manpower_detail_summarized_by_month_section_b.length; i++) {
 		var currentItem = frm.doc.manpower_detail_summarized_by_month_section_b[i];
+		var currentItemQty = frm.doc.operational_plan_manpower_detail_summarized_two_qty[i];
+		var currentItemCost = frm.doc.operational_plan_manpower_detail_summarized_two_cost[i];
+
 		var job_title = currentItem.job_title;
 		var aggregatedValueForType = manpowerAggregatedValues[job_title];
 
 		if (aggregatedValueForType) {
+			var month_name =
+				m === "1" ? "jan" :
+					m === "2" ? "feb" :
+						m === "3" ? "mar" :
+							m === "4" ? "apr" :
+								m === "5" ? "may" :
+									m === "6" ? "jun" :
+										m === "7" ? "july" :
+											m === "8" ? "aug" :
+												m === "9" ? "sep" :
+													m === "10" ? "oct" :
+														m === "11" ? "nov" :
+															m === "12" ? "dec" :
+																null;
 			currentItem["op_mp_m" + m] = aggregatedValueForType;
+			currentItemQty["op_mp_m" + m] = aggregatedValueForType / (8 * frm.doc.no[0][month_name]);
+			currentItemCost["op_mp_m" + m] = manpowerAggregatedValuesCost[job_title]
 		} else {
 			currentItem["op_mp_m" + m] = 0;
+			currentItemQty["op_mp_m" + m] = 0;
+			currentItemCost["op_mp_m" + m] = 0;
 		}
 	}
 
 	frm.refresh_field("manpower_detail_summarized_by_month_section_b");
+	frm.refresh_field("operational_plan_manpower_detail_summarized_two_qty");
+	frm.refresh_field("operational_plan_manpower_detail_summarized_two_cost");
+
 }
 
 function calculateMachineryValues(frm, cdt, cdn, m) {
 	var machineryAggregatedValues = {};
+	var machineryAggregatedValuesCost = {};
+
 
 	// Iterate through the machinery array
 	for (var i = 0; i < frm.doc.machinery.length; i++) {
@@ -1588,26 +2108,62 @@ function calculateMachineryValues(frm, cdt, cdn, m) {
 			// If type doesn't exist, assign the value
 			machineryAggregatedValues[type] = activityMonthQuantity * machineryItem.uf * machineryItem.efficency * machineryItem.equp_no / machineryItem.productivity;
 		}
+
+		if (machineryAggregatedValuesCost[type]) {
+			// If type already exists in machineryAggregatedValues, add the value
+			machineryAggregatedValuesCost[type] += activityMonthQuantity * machineryItem.uf * machineryItem.efficency * machineryItem.equp_no / machineryItem.productivity * machineryItem.rental_rate;
+		} else {
+			// If type doesn't exist, assign the value
+			machineryAggregatedValuesCost[type] = activityMonthQuantity * machineryItem.uf * machineryItem.efficency * machineryItem.equp_no / machineryItem.productivity * machineryItem.rental_rate;
+		}
+
 	}
-	console.log("AGGRICAGE", machineryAggregatedValues)
+	console.log("AGGRICAGEeeeejjjjjjjjeeeee", machineryAggregatedValuesCost)
 
 	// Iterate through the machinary_detail_summarized_by_month_section_a array
 	for (var i = 0; i < frm.doc.machinary_detail_summarized_by_month_section_a.length; i++) {
 		var currentItem = frm.doc.machinary_detail_summarized_by_month_section_a[i];
+		var currentItemQty = frm.doc.operational_plan_machinery_detail_summarized_one_qty[i];
+		var currentItemCost = frm.doc.operational_plan_machinery_detail_summarized_one_cost[i];
+
 		var type = currentItem.type;
 		var aggregatedValueForType = machineryAggregatedValues[type];
 
 		if (aggregatedValueForType) {
+			var month_name =
+				m === "1" ? "jan" :
+					m === "2" ? "feb" :
+						m === "3" ? "mar" :
+							m === "4" ? "apr" :
+								m === "5" ? "may" :
+									m === "6" ? "jun" :
+										m === "7" ? "july" :
+											m === "8" ? "aug" :
+												m === "9" ? "sep" :
+													m === "10" ? "oct" :
+														m === "11" ? "nov" :
+															m === "12" ? "dec" :
+																null;
+			console.log("silkshn newa", machineryAggregatedValuesCost)
 			currentItem["op_e_m" + m] = aggregatedValueForType;
+			currentItemQty["op_e_m" + m] = aggregatedValueForType / (8 * frm.doc.no[0][month_name]);
+			currentItemCost["op_e_m" + m] = machineryAggregatedValuesCost[type]
+			
 		} else {
 			currentItem["op_e_m" + m] = 0; // or handle the case where there is no aggregated value for the type
+			currentItemQty["op_e_m" + m] = 0;
+			currentItemCost["op_e_m" + m] = 0;
 		}
 	}
 
 	frm.refresh_field("machinary_detail_summarized_by_month_section_a");
+	frm.refresh_field("operational_plan_machinery_detail_summarized_one_qty");
+	frm.refresh_field("operational_plan_machinery_detail_summarized_one_cost");
+
 }
 function calculateMachineryValuesB(frm, cdt, cdn, m) {
 	var machineryAggregatedValues = {};
+	var machineryAggregatedValuesCost = {};
 
 	// Iterate through the machinery array
 	for (var i = 0; i < frm.doc.machinery.length; i++) {
@@ -1630,6 +2186,14 @@ function calculateMachineryValuesB(frm, cdt, cdn, m) {
 		} else {
 			// If type doesn't exist, assign the value
 			machineryAggregatedValues[type] = activityMonthQuantity * machineryItem.uf * machineryItem.efficency * machineryItem.equp_no / machineryItem.productivity;
+		}
+
+		if (machineryAggregatedValuesCost[type]) {
+			// If type already exists in machineryAggregatedValues, add the value
+			machineryAggregatedValuesCost[type] += activityMonthQuantity * machineryItem.uf * machineryItem.efficency * machineryItem.equp_no / machineryItem.productivity * machineryItem.rental_rate;
+		} else {
+			// If type doesn't exist, assign the value
+			machineryAggregatedValuesCost[type] = activityMonthQuantity * machineryItem.uf * machineryItem.efficency * machineryItem.equp_no / machineryItem.productivity * machineryItem.rental_rate;
 		}
 	}
 	console.log("AGGRICAGE", machineryAggregatedValues)
@@ -1637,15 +2201,40 @@ function calculateMachineryValuesB(frm, cdt, cdn, m) {
 	// Iterate through the machinary_detail_summarized_by_month_section_a array
 	for (var i = 0; i < frm.doc.machinary_detail_summarized_by_month_section_b.length; i++) {
 		var currentItem = frm.doc.machinary_detail_summarized_by_month_section_b[i];
+		var currentItemQty = frm.doc.operational_plan_machinery_detail_summarized_two_qty[i];
+		var currentItemCost = frm.doc.operational_plan_machinery_detail_summarized_two_cost[i];
 		var type = currentItem.type;
 		var aggregatedValueForType = machineryAggregatedValues[type];
 
 		if (aggregatedValueForType) {
+			var month_name =
+				m === "1" ? "jan" :
+					m === "2" ? "feb" :
+						m === "3" ? "mar" :
+							m === "4" ? "apr" :
+								m === "5" ? "may" :
+									m === "6" ? "jun" :
+										m === "7" ? "july" :
+											m === "8" ? "aug" :
+												m === "9" ? "sep" :
+													m === "10" ? "oct" :
+														m === "11" ? "nov" :
+															m === "12" ? "dec" :
+																null;
+			console.log("silkshn newa", machineryAggregatedValuesCost)
 			currentItem["op_e_m" + m] = aggregatedValueForType;
+			currentItemQty["op_e_m" + m] = aggregatedValueForType / (8 * frm.doc.no[0][month_name]);
+			currentItemCost["op_m_m" + m] = machineryAggregatedValuesCost[type]
+
 		} else {
 			currentItem["op_e_m" + m] = 0; // or handle the case where there is no aggregated value for the type
+			currentItemQty["op_e_m" + m] = 0;
+			currentItemCost["op_e_m" + m] = 0;
 		}
 	}
 
 	frm.refresh_field("machinary_detail_summarized_by_month_section_b");
+	frm.refresh_field("operational_plan_machinery_detail_summarized_two_qty");
+	frm.refresh_field("operational_plan_machinery_detail_summarized_two_cost");
+
 }

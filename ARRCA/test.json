@@ -1,0 +1,109 @@
+{
+    "2023": [
+        {
+            "task_id": "PRO-TAS-00180",
+            "task_name": "Production of Borrow Fill, for station 15+600+18+100km",
+            "es": "2023-12-06",
+            "ef": "2024-03-20",
+            "monthly_working_days": {
+                "1": 31,
+                "2": 28,
+                "3": 31,
+                "4": 30,
+                "5": 31,
+                "6": 30,
+                "7": 31,
+                "8": 31,
+                "9": 30,
+                "10": 31,
+                "11": 30,
+                "12": 28,
+                "creation": "2023-12-06 20:14:55.232614",
+                "doctype": "Master No of working days",
+                "year": "2023",
+                "owner": "Administrator",
+                "modified_by": "Administrator",
+                "docstatus": 0,
+                "parent": "MP-00017",
+                "name": "ab771e1a00",
+                "idx": 1,
+                "modified": "2023-12-06 20:49:32.746613",
+                "parenttype": "Master Plan",
+                "parentfield": "no"
+            }
+        },
+        {
+            "task_id": "TASK-2023-00006",
+            "task_name": "Production of Borrow Fill, for station 15+600+18+100km",
+            "es": "2023-12-06",
+            "ef": "2024-03-20",
+            "monthly_working_days": {
+                "1": 31,
+                "2": 28,
+                "3": 31,
+                "4": 30,
+                "5": 31,
+                "6": 30,
+                "7": 31,
+                "8": 31,
+                "9": 30,
+                "10": 31,
+                "11": 30,
+                "12": 28,
+                "creation": "2023-12-06 20:14:55.232614",
+                "doctype": "Master No of working days",
+                "year": "2023",
+                "owner": "Administrator",
+                "modified_by": "Administrator",
+                "docstatus": 0,
+                "parent": "MP-00017",
+                "name": "ab771e1a00",
+                "idx": 1,
+                "modified": "2023-12-06 20:49:32.746613",
+                "parenttype": "Master Plan",
+                "parentfield": "no"
+            }
+        },
+
+        {
+            "task_id": "TASK-2023-00005",
+            "task_name": "Production of Borrow Fill, for station 15+600+18+100km",
+            "es": "2023-12-06",
+            "ef": "2024-03-20",
+            "monthly_working_days": {
+                "1": 31,
+                "2": 28,
+                "3": 31,
+                "4": 30,
+                "5": 31,
+                "6": 30,
+                "7": 31,
+                "8": 31,
+                "9": 30,
+                "10": 31,
+                "11": 30,
+                "12": 28,
+                "creation": "2023-12-06 20:14:55.232614",
+                "doctype": "Master No of working days",
+                "year": "2023",
+                "owner": "Administrator",
+                "modified_by": "Administrator",
+                "docstatus": 0,
+                "parent": "MP-00017",
+                "name": "ab771e1a00",
+                "idx": 1,
+                "modified": "2023-12-06 20:49:32.746613",
+                "parenttype": "Master Plan",
+                "parentfield": "no"
+            }
+        }
+    ],
+    "2025": [
+        {
+            "task_id": "TASK-2023-00006",
+            "task_name": "Cut to spoil Hard KM 20500-26500",
+            "es": "2025-05-07",
+            "ef": "2025-06-27"
+        }
+    ]
+}
